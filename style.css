@@ -341,20 +341,24 @@ body {
 .modal-content-classico {
     background: #ffffff;
     border: 1px solid var(--oro-accento);
-    border-radius: 16px;
-    padding: 2rem;
+    border-radius: 20px;
+    padding: 2.5rem;
     width: 100%;
-    max-width: 600px;
-    max-height: 90vh;
+    max-width: 650px;
+    max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
 }
 
 .modal-content-classico h2 {
     margin-top: 0;
+    margin-bottom: 1.5rem;
     color: var(--testo-principale);
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--colore-bordo);
+    padding-bottom: 0.8rem;
 }
 
 .modal-content-classico form {
@@ -364,22 +368,28 @@ body {
 }
 
 .modal-content-classico label {
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: var(--testo-sfumato);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    margin-bottom: 0.3rem;
+    display: block;
 }
 
 .modal-content-classico input, 
 .modal-content-classico select, 
 .modal-content-classico textarea {
-    background: #f8f8f8;
+    width: 100%;
+    background: #faf9f6;
     border: 1px solid var(--colore-bordo);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 0.8rem 1rem;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    color: var(--testo-principale);
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .modal-content-classico input:focus, 
@@ -388,6 +398,7 @@ body {
     outline: none;
     border-color: var(--oro-accento);
     background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
 .modal-azioni {
@@ -607,139 +618,6 @@ body {
 .chef-fs-btn-nav.primario { background: var(--oro-accento); color: #141414; border-color: var(--oro-accento); font-weight: 700; }
 .modal-overlay-chef.hidden { display: none; }
 
-
-/* =========================================================
-   MEDIA QUERY PER SMARTPHONE E TABLET (Schermi sotto i 1024px)
-   ========================================================= */
-@keyframes fadeInMobile {
-    from { opacity: 0; transform: scale(0.98); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-@media screen and (max-width: 1024px) {
-    .scrivania {
-        padding: 0;
-        height: 100vh;
-        width: 100vw;
-    }
-
-    .libro-aperto {
-        width: 100vw !important;
-        height: 100vh !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
-
-    .libro-aperto::before {
-        display: none !important;
-    }
-
-    .pagina {
-        display: none !important;
-        width: 100% !important;
-        flex: 1 !important;
-        padding: 1.2rem 1rem !important;
-        animation: fadeInMobile 0.25s ease-out !important;
-    }
-
-    .pagina.pagina-attiva-mobile {
-        display: flex !important;
-    }
-
-    .indice-romanzo-scroll {
-        max-height: calc(100vh - 200px) !important;
-    }
-
-    .ricetta-layout-moderno {
-        max-height: calc(100vh - 180px) !important;
-    }
-
-    .ricetta-header-grid {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .ricetta-foto-principale {
-        width: 100%;
-        max-height: 160px;
-    }
-
-    .ricetta-meta-tags {
-        justify-content: center;
-    }
-
-    .chef-fs-testo {
-        font-size: 1.4rem !important;
-    }
-}
-
-/* STYLING MODALE NUOVA RICETTA & FORM */
-.modal-content-classico {
-    background: #ffffff;
-    border: 1px solid var(--oro-accento);
-    border-radius: 20px;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 650px;
-    max-height: 85vh;
-    overflow-y: auto;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-}
-
-.modal-content-classico h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: var(--testo-principale);
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--colore-bordo);
-    padding-bottom: 0.8rem;
-}
-
-.modal-content-classico form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-}
-
-.modal-content-classico label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--testo-sfumato);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.3rem;
-    display: block;
-}
-
-.modal-content-classico input, 
-.modal-content-classico select, 
-.modal-content-classico textarea {
-    width: 100%;
-    background: #faf9f6;
-    border: 1px solid var(--colore-bordo);
-    border-radius: 10px;
-    padding: 0.8rem 1rem;
-    font-family: inherit;
-    font-size: 0.95rem;
-    color: var(--testo-principale);
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-}
-
-.modal-content-classico input:focus, 
-.modal-content-classico select:focus, 
-.modal-content-classico textarea:focus {
-    outline: none;
-    border-color: var(--oro-accento);
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
-}
-
 /* FOOTER DELLA PAGINA DI DESTRA ORDINATO */
 .destra-footer-gruppo {
     display: flex;
@@ -758,6 +636,14 @@ body {
     display: flex;
     gap: 1.2rem;
     align-items: center;
+}
+
+/* =========================================================
+   MEDIA QUERY PER SMARTPHONE E TABLET (Schermi sotto i 1024px)
+   ========================================================= */
+@keyframes fadeInMobile {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 @media screen and (max-width: 1024px) {
@@ -796,14 +682,37 @@ body {
         flex: 1 !important;
         padding: 1.5rem 1.2rem !important;
         box-sizing: border-box !important;
+        animation: fadeInMobile 0.25s ease-out !important;
     }
 
     .pagina.pagina-attiva-mobile {
         display: flex !important;
     }
 
-    .footer-pagina {
-        margin-top: auto !important;
-        padding-bottom: env(safe-area-inset-bottom, 1rem);
+    .indice-romanzo-scroll {
+        max-height: calc(100vh - 220px) !important;
+    }
+
+    .ricetta-layout-moderno {
+        max-height: calc(100vh - 200px) !important;
+    }
+
+    .ricetta-header-grid {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .ricetta-foto-principale {
+        width: 100%;
+        max-height: 160px;
+    }
+
+    .ricetta-meta-tags {
+        justify-content: center;
+    }
+
+    .chef-fs-testo {
+        font-size: 1.4rem !important;
     }
 }
