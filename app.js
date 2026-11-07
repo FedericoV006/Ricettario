@@ -134,14 +134,13 @@ formRicetta.addEventListener('submit', async (e) => {
             ricetta.categoria = document.getElementById('categoria').value;
             ricetta.foto = document.getElementById('foto').value;
             ricetta.persone = personeIniziali;
-            ricetta.personeBase = personeIniziali;
+            ricetta.persone_base = personeIniziali;
             ricetta.ingredienti = ingredientiInseriti;
-            ricetta.ingredientiBase = ingredientiInseriti;
+            ricetta.ingredienti_base = ingredientiInseriti;
             ricetta.preparazione = document.getElementById('preparazione').value;
             ricetta.note = document.getElementById('note').value;
 
-            // Salva le modifiche sul cloud
-            await supabaseClient.from('ricette').upsert([ricetta]);
+            await supabaseClient.from('ricette').upsert([ricetta], { onConflict: 'id' });
         }
     } else {
         const nuovaRicetta = {
@@ -150,9 +149,9 @@ formRicetta.addEventListener('submit', async (e) => {
             categoria: document.getElementById('categoria').value,
             foto: document.getElementById('foto').value,
             persone: personeIniziali,
-            personeBase: personeIniziali,
+            persone_base: personeIniziali,
             ingredienti: ingredientiInseriti,
-            ingredientiBase: ingredientiInseriti,
+            ingredienti_base: ingredientiInseriti,
             preparazione: document.getElementById('preparazione').value,
             note: document.getElementById('note').value,
             valutazione: 0,
@@ -160,7 +159,6 @@ formRicetta.addEventListener('submit', async (e) => {
         };
         ricettario.push(nuovaRicetta);
         
-        // Inserisce la nuova ricetta direttamente sul cloud Supabase
         await supabaseClient.from('ricette').insert([nuovaRicetta]);
     }
 
