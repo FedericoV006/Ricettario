@@ -759,3 +759,51 @@ body {
     gap: 1.2rem;
     align-items: center;
 }
+
+@media screen and (max-width: 1024px) {
+    body {
+        overflow: auto !important;
+        background-color: var(--colore-carta) !important;
+    }
+
+    .scrivania {
+        padding: 0 !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        display: block !important;
+    }
+
+    .libro-aperto {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .libro-aperto::before {
+        display: none !important;
+    }
+
+    .pagina {
+        display: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        flex: 1 !important;
+        padding: 1.5rem 1.2rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .pagina.pagina-attiva-mobile {
+        display: flex !important;
+    }
+
+    .footer-pagina {
+        margin-top: auto !important;
+        padding-bottom: env(safe-area-inset-bottom, 1rem);
+    }
+}
