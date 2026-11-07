@@ -30,7 +30,7 @@
                     <!-- Contenuto dinamico -->
                 </div>
 
-                <div class="footer-pagina">
+                <div class="footer-pagina" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 5;">
                     <button id="btn-prec-sx" class="btn-classico btn-nav-footer">← Indietro</button>
                     <span id="num-pag-sx" class="numero-pagina">1</span>
                     <button id="btn-succ-sx" class="btn-classico btn-nav-footer">Avanti →</button>
@@ -48,20 +48,12 @@
                     <!-- Contenuto dinamico -->
                 </div>
 
-                <div class="footer-pagina">
-                    <div class="destra-footer-gruppo">
-                        <div class="destra-footer-sinistra">
-                            <button id="btn-prec-dx" class="btn-classico btn-nav-footer">← Indietro</button>
-                            <button onclick="esportaBackup()" class="btn-piccolo" title="Esporta backup JSON">💾 Esporta</button>
-                            <label class="btn-piccolo" style="cursor: pointer;" title="Importa backup JSON">
-                                📂 Importa <input type="file" id="file-input" onchange="importaBackup(event)" style="display: none;">
-                            </label>
-                        </div>
-                        <div class="destra-footer-destra">
-                            <button id="btn-succ-dx" class="btn-classico btn-nav-footer">Avanti →</button>
-                            <button id="btn-chiudi-libro" class="btn-piccolo" style="color: #b83232; font-weight: 700;">✕ Chiudi</button>
-                            <span id="num-pag-dx" class="numero-pagina">2</span>
-                        </div>
+                <div class="footer-pagina" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 5;">
+                    <button id="btn-prec-dx" class="btn-classico btn-nav-footer">← Indietro</button>
+                    <span id="num-pag-dx" class="numero-pagina">2</span>
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <button id="btn-succ-dx" class="btn-classico btn-nav-footer">Avanti →</button>
+                        <button id="btn-chiudi-libro" class="btn-piccolo" style="color: #b83232; font-weight: 700; background: none; border: none; cursor: pointer;">✕ Riponi Volume</button>
                     </div>
                 </div>
             </div>

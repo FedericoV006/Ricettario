@@ -184,10 +184,6 @@ formRicetta.addEventListener('submit', async (e) => {
     renderizzaLibro();
 });
 
-async function salvaDati() {
-    // Salvataggio di backup locale se serve, ma gestiamo tutto sul cloud
-}
-
 async function aggiornaRicettaCloud(ricetta) {
     await supabaseClient
         .from('ricette')
@@ -418,7 +414,7 @@ function renderizzaLibro() {
                     const indiceGlobale = ricettario.findIndex(item => item.id === r.id);
                     const numeroPaginaLibro = (indiceGlobale + 1) * 2 + 1;
                     return `
-                        <li class="voce-indice" onclick="vaiAllaRicetta(${indiceGlobale})" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <li class="voce-indice" onclick="vaiAllaRicetta(${indiceGlobale})" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;">
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                                 <span style="font-weight: 600; font-size: 0.95rem;">${r.titolo}</span>
                                 <span style="font-size: 0.75rem; color: var(--testo-sfumato);">pag. ${numeroPaginaLibro}</span>
@@ -651,6 +647,7 @@ function renderizzaLibro() {
         `;
     }
 }
+
 function aggiornaFricercaIndice(valore) {
     filtroRicercaIndice = valore;
     renderizzaLibro();
@@ -681,6 +678,10 @@ function avviaModalChef(idRicetta, passoIniziale = 0) {
     if (passiCorrenti.length === 0) passiCorrenti = [ricetta.preparazione];
 
     indicePassoAttivo = passoIniziale;
+    
+    const titoloChefEl = document.getElementById('chef-fs-titolo-ricetta');
+    if (titoloChefEl) titoloChefEl.textContent = ricetta.titolo.toUpperCase();
+
     mostraPassoChefCorrente();
     
     const modalChef = document.getElementById('modal-chef');
@@ -688,39 +689,40 @@ function avviaModalChef(idRicetta, passoIniziale = 0) {
 }
 
 function mostraPassoChefCorrente() {
-    const containerTesto = document.getElementById('chef-testo-passo');
-    const containerIndicatori = document.getElementById('chef-indicatori-passi');
+    const containerTesto = document.getElementById('chef-fs-testo');
+    const indicatoreStep = document.getElementById('chef-fs-step-indicatore');
+    const barraContainer = document.getElementById('chef-fs-barre');
     
-    if (!containerTesto) return;
-
     if (passiCorrenti.length > 0) {
-        containerTesto.textContent = passiCorrenti[indicePassoAttivo];
+        if (containerTesto) containerTesto.textContent = passiCorrenti[indicePassoAttivo];
+        if (indicatoreStep) indicatoreStep.textContent = `PASSAGGIO ${indicePassoAttivo + 1} DI ${passiCorrenti.length}`;
     } else {
-        containerTesto.textContent = "Nessun passaggio disponibile.";
+        if (containerTesto) containerTesto.textContent = "Nessun passaggio disponibile.";
+        if (indicatoreStep) indicatoreStep.textContent = "PASSAGGIO 1";
     }
 
-    if (containerIndicatori) {
-        containerIndicatori.innerHTML = passiCorrenti.map((_, idx) => `
-            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${idx === indicePassoAttivo ? 'var(--oro-accento)' : '#ccc'}; transition: background 0.3s;"></div>
+    if (barraContainer) {
+        barraContainer.innerHTML = passiCorrenti.map((_, idx) => `
+            <div style="flex: 1; height: 4px; background: ${idx <= indicePassoAttivo ? 'var(--oro-accento)' : 'rgba(255,255,255,0.3)'}; border-radius: 2px; transition: background 0.3s;"></div>
         `).join('');
     }
 
     const passoTesto = passiCorrenti[indicePassoAttivo] || "";
     const matchTempo = passoTesto.match(/(\d+)\s*(ore|ora|minuti|minuto|min|secondi|secondo|sec)/i);
     
-    const boxTimer = document.getElementById('chef-timer-box');
-    if (boxTimer) {
+    const timerContainer = document.getElementById('chef-fs-timer-container');
+    if (timerContainer) {
         if (matchTempo) {
-            boxTimer.style.display = 'block';
+            timerContainer.style.display = 'flex';
             impostaTimerDaMatch(matchTempo[0]);
         } else {
-            boxTimer.style.display = 'none';
+            timerContainer.style.display = 'none';
             fermaTuttoAllarme();
         }
     }
 }
 
-function passoPrecedenteChef() {
+function passoPrecedente() {
     if (indicePassoAttivo > 0) {
         indicePassoAttivo--;
         fermaTuttoAllarme();
@@ -728,7 +730,7 @@ function passoPrecedenteChef() {
     }
 }
 
-function passoSuccessivoChef() {
+function passoSuccessivo() {
     if (indicePassoAttivo < passiCorrenti.length - 1) {
         indicePassoAttivo++;
         fermaTuttoAllarme();
@@ -758,6 +760,15 @@ function impostaTimerDaMatch(stringaTempo) {
 
     chefSecondiTotali = secondi;
     chefSecondiRimanenti = secondi;
+    
+    let displayEl = document.getElementById('chef-timer-display');
+    if (!displayEl && document.getElementById('chef-fs-timer-container')) {
+        document.getElementById('chef-fs-timer-container').innerHTML = `
+            <span id="chef-timer-display" style="font-size: 1.2rem; font-weight: bold; margin-right: 10px;">00:00</span>
+            <button onclick="avviaChefTimer()" class="btn-piccolo" style="background: var(--oro-accento); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Avvia</button>
+            <button onclick="pausaChefTimer()" class="btn-piccolo" style="background: #ccc; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 4px;">Pausa</button>
+        `;
+    }
     aggiornaDisplayTimer();
 }
 
@@ -787,13 +798,6 @@ function avviaChefTimer() {
 function pausaChefTimer() {
     chefTimerAttivo = false;
     clearInterval(chefTimerInterval);
-}
-
-function resetChefTimer() {
-    pausaChefTimer();
-    chefSecondiRimanenti = chefSecondiTotali;
-    aggiornaDisplayTimer();
-    fermaTuttoAllarme();
 }
 
 function fermaChefTimer() {
@@ -836,5 +840,90 @@ function suonaAllarmeFineTimer() {
         osc.stop(audioCtx.currentTime + 1.2);
     } catch (e) {
         console.log("Audio non supportato o bloccato dal browser");
+    }
+}
+
+function vaiAllaRicetta(indiceGlobale) {
+    paginaCorrenteIndex = (indiceGlobale + 1) * 2;
+    renderizzaLibro();
+}
+
+function vaiAllIndice() {
+    paginaCorrenteIndex = 0;
+    renderizzaLibro();
+}
+
+function vaiAllaSpesa() {
+    paginaCorrenteIndex = (ricettario.length + 1) * 2;
+    renderizzaLibro();
+}
+
+function tornaIndietroDaSpesa() {
+    paginaCorrenteIndex = 0;
+    renderizzaLibro();
+}
+
+async function eliminaRicetta(id) {
+    if (confirm("Vuoi davvero eliminare questa ricetta?")) {
+        ricettario = ricettario.filter(r => r.id !== id);
+        await supabaseClient.from('ricette').delete().eq('id', id);
+        paginaCorrenteIndex = 0;
+        renderizzaLibro();
+    }
+}
+
+function apriModificaRicetta(id) {
+    const ricetta = ricettario.find(r => r.id === id);
+    if (!ricetta) return;
+    
+    idRicettaInModifica = id;
+    document.getElementById('titolo').value = ricetta.titolo;
+    document.getElementById('categoria').value = ricetta.categoria;
+    document.getElementById('foto').value = ricetta.foto || '';
+    document.getElementById('persone').value = ricetta.persone;
+    document.getElementById('ingredienti').value = ricetta.ingredienti;
+    document.getElementById('preparazione').value = ricetta.preparazione;
+    document.getElementById('note').value = ricetta.note || '';
+
+    modal.querySelector('h2').textContent = "Modifica Ricetta";
+    modal.classList.remove('hidden');
+}
+
+async function aggiungiAllaSpesaSilenzioso(ingrediente, btnId) {
+    listaSpesa.push({ id: Date.now() + Math.random(), nome: ingrediente, comprato: false });
+    await aggiornaSpesaCloud();
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        btn.textContent = "✅";
+        setTimeout(() => { btn.textContent = "🛒"; }, 1500);
+    }
+}
+
+function cambiaPorzioni(idRicetta, delta) {
+    const ricetta = ricettario.find(r => r.id === idRicetta);
+    if (!ricetta) return;
+    
+    ricetta.persone = Math.max(1, ricetta.persone + delta);
+    const spanPersone = document.getElementById('span-persone');
+    if (spanPersone) spanPersone.textContent = ricetta.persone;
+}
+
+function toggleSpesa(index) {
+    listaSpesa[index].comprato = !listaSpesa[index].comprato;
+    aggiornaSpesaCloud();
+    renderizzaLibro();
+}
+
+async function rimuoviDaSpesa(index) {
+    listaSpesa.splice(index, 1);
+    await aggiornaSpesaCloud();
+    renderizzaLibro();
+}
+
+async function svuotaSpesa() {
+    if (confirm("Svuotare tutta la lista della spesa?")) {
+        listaSpesa = [];
+        await aggiornaSpesaCloud();
+        renderizzaLibro();
     }
 }
