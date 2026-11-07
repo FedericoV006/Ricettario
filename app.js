@@ -297,7 +297,6 @@ function renderizzaLibro() {
 
     const isMobile = window.innerWidth <= 1024;
     
-    // Calcolo dello spread (capitolo/pagina doppia) e della pagina attiva su mobile
     let spreadIndex = paginaCorrenteIndex;
     if (isMobile) {
         spreadIndex = Math.floor(paginaCorrenteIndex / 2);
@@ -364,18 +363,20 @@ function renderizzaLibro() {
 
             let htmlLista = '';
             if (ricetteCat.length === 0) {
-                htmlLista = `<li class="voce-indice vuota" style="color: #999; font-style: italic;">Nessuna ricetta presente</li>`;
+                htmlLista = `<li class="voce-indice vuota" style="color: #999; font-style: italic; padding: 0.5rem 0.8rem;">Nessuna ricetta presente</li>`;
             } else {
                 htmlLista = ricetteCat.map(r => {
                     const indiceGlobale = ricettario.findIndex(item => item.id === r.id);
                     const numeroPaginaLibro = (indiceGlobale + 1) * 2 + 1;
                     return `
-                        <li class="voce-indice" onclick="vaiAllaRicetta(${indiceGlobale})">
-                            <span style="font-weight: 500;">${r.titolo}</span>
-                            <div style="display: flex; align-items: center; gap: 0.8rem;" onclick="event.stopPropagation()">
-                                <span style="font-size: 0.85rem; color: var(--testo-sfumato);">pag. ${numeroPaginaLibro}</span>
-                                <button onclick="apriModificaRicetta(${r.id})" title="Modifica" style="background: none; border: none; cursor: pointer; font-size: 0.9rem;">✏️</button>
-                                <button onclick="eliminaRicetta(${r.id})" title="Elimina" style="background: none; border: none; color: #b83232; font-size: 1.1rem; cursor: pointer; font-weight: bold;">×</button>
+                        <li class="voce-indice" onclick="vaiAllaRicetta(${indiceGlobale})" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <span style="font-weight: 600; font-size: 0.95rem;">${r.titolo}</span>
+                                <span style="font-size: 0.75rem; color: var(--testo-sfumato);">pag. ${numeroPaginaLibro}</span>
+                            </div>
+                            <div style="display: flex; gap: 1rem; align-items: center; width: 100%; justify-content: flex-end; margin-top: 0.2rem;" onclick="event.stopPropagation()">
+                                <button onclick="apriModificaRicetta(${r.id})" title="Modifica" style="background: none; border: none; cursor: pointer; font-size: 0.85rem;">✏️ Modifica</button>
+                                <button onclick="eliminaRicetta(${r.id})" title="Elimina" style="background: none; border: none; color: #b83232; font-size: 0.85rem; cursor: pointer; font-weight: bold;">✕ Elimina</button>
                             </div>
                         </li>
                     `;
@@ -484,9 +485,6 @@ function renderizzaLibro() {
             `;
         }).join('');
 
-        // ==========================================
-        // PAGINA SINISTRA: FOTO, TITOLO, INGREDIENTI E TASTI SOTTO
-        // ==========================================
         contSx.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="overflow-y: auto; max-height: 720px; padding-right: 0.3rem;">
@@ -538,9 +536,6 @@ function renderizzaLibro() {
             </div>
         `;
 
-        // ==========================================
-        // PAGINA DESTRA: PREPARAZIONE E NOTE DELLO CHEF
-        // ==========================================
         contDx.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="overflow-y: auto; max-height: 720px; padding-right: 0.3rem;">
