@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Il Mio Ricettario Personale</title>
+    
+    <!-- COLLEGAMENTO AL MANIFEST E CONFIGURAZIONE PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d4af37">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ricettario">
+    <link rel="apple-touch-icon" href="icon.png">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -166,7 +175,7 @@
                 <button class="chef-fs-chiudi" onclick="chiudiModalChef()">✕</button>
             </div>
 
-            <!-- NUOVO TIMER DA CUCINA STILE DIAL / SCHERMO GRANDE -->
+            <!-- WIDGET TIMER DA CUCINA MODERNIZZATO -->
             <div id="chef-fs-timer-container" class="timer-cucina-nuovo" style="display: none;">
                 <div class="timer-display-grande" id="chef-timer-display">00:00</div>
                 <div class="timer-pulsanti-box">
@@ -191,5 +200,14 @@
     </div>
 
     <script src="app.js"></script>
+
+    <!-- REGISTRAZIONE SERVICE WORKER PER INSTALLAZIONE PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('Registrazione Service Worker fallita:', err);
+            });
+        }
+    </script>
 </body>
 </html>
