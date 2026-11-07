@@ -648,20 +648,22 @@ body {
 
 @media screen and (max-width: 1024px) {
     body {
-        overflow: auto !important;
+        overflow-y: auto !important;
         background-color: var(--colore-carta) !important;
+        height: 100% !important;
     }
 
     .scrivania {
         padding: 0 !important;
-        height: 100vh !important;
+        min-height: 100vh !important;
         width: 100vw !important;
         display: block !important;
+        position: relative !important;
     }
 
     .libro-aperto {
         width: 100vw !important;
-        height: 100vh !important;
+        min-height: 100vh !important;
         max-width: none !important;
         max-height: none !important;
         border-radius: 0 !important;
@@ -678,9 +680,9 @@ body {
     .pagina {
         display: none !important;
         width: 100% !important;
-        height: 100% !important;
+        min-height: calc(100vh - 60px) !important;
         flex: 1 !important;
-        padding: 1.5rem 1.2rem !important;
+        padding: 1.2rem 1rem !important;
         box-sizing: border-box !important;
         animation: fadeInMobile 0.25s ease-out !important;
     }
@@ -690,11 +692,11 @@ body {
     }
 
     .indice-romanzo-scroll {
-        max-height: calc(100vh - 220px) !important;
+        max-height: 65vh !important;
     }
 
     .ricetta-layout-moderno {
-        max-height: calc(100vh - 200px) !important;
+        max-height: calc(100vh - 180px) !important;
     }
 
     .ricetta-header-grid {
