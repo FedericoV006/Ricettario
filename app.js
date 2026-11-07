@@ -1,5 +1,5 @@
 // Configurazione Supabase (usiamo solo l'URL e la chiave pubblica anonima)
-const SUPABASE_URL = 'https://sbrwexmfrgpxjchqoxbc.supabase.co'; // (Sostituisci se l'URL del tuo progetto è diverso)
+const SUPABASE_URL = 'https://bzrukvwbiofqoqavctgj.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_L4SfyknPe1qIHWa5mAcf-Q_LYH7jlfI';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
