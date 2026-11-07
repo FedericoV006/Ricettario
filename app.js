@@ -321,12 +321,21 @@ function renderizzaLibro() {
     const maxSpread = ricettario.length + 1;
     const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
 
+    // Gestione dei pulsanti di navigazione universali per mobile e desktop
+    const footerSxEl = paginaSinistraEl.querySelector('.footer-pagina');
+    const footerDxEl = paginaDestraEl.querySelector('.footer-pagina');
+
     if (isMobile) {
-        btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
-        btnSucc.style.display = paginaCorrenteIndex >= maxMobileIndex ? 'none' : 'inline-block';
-    } else {
-        btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
-        btnSucc.style.display = paginaCorrenteIndex >= maxSpread ? 'none' : 'inline-block';
+        // Su mobile inseriamo entrambi i pulsanti (Indietro / Avanti) nel footer della pagina attiva
+        const htmlNavMobile = `
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <button id="btn-prec-mob" class="btn-piccolo" onclick="cambiaPaginaMobile(-1)" ${paginaCorrenteIndex === 0 ? 'style="visibility:hidden;"' : ''}>← Indietro</button>
+                <span class="numero-pagina">Pag. ${paginaCorrenteIndex + 1}</span>
+                <button id="btn-succ-mob" class="btn-piccolo" onclick="cambiaPaginaMobile(1)" ${paginaCorrenteIndex >= maxMobileIndex ? 'style="visibility:hidden;"' : ''}>Avanti →</button>
+            </div>
+        `;
+        if (!isRightPage && footerSxEl) footerSxEl.innerHTML = htmlNavMobile;
+        if (isRightPage && footerDxEl) footerDxEl.innerHTML = htmlNavMobile;
     }
 
     if (spreadIndex === 0) {
@@ -600,6 +609,16 @@ function renderizzaLibro() {
                 </div>
             </div>
         `;
+    }
+}
+
+// Funzione di supporto per far avanzare/indietreggiare i passi da mobile
+function cambiaPaginaMobile(direzione) {
+    const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
+    const nuovoIndice = paginaCorrenteIndex + direzione;
+    if (nuovoIndice >= 0 && nuovoIndice <= maxMobileIndex) {
+        paginaCorrenteIndex = nuovoIndice;
+        renderizzaLibro();
     }
 }
 
