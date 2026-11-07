@@ -1,5 +1,11 @@
-let ricettario = JSON.parse(localStorage.getItem('ricettario_polillo')) || [];
-let listaSpesa = JSON.parse(localStorage.getItem('lista_spesa_polillo')) || [];
+// Configurazione Supabase (usiamo solo l'URL e la chiave pubblica anonima)
+const SUPABASE_URL = 'https://sbrwexmfrgpxjchqoxbc.supabase.co'; // (Sostituisci se l'URL del tuo progetto è diverso)
+const SUPABASE_ANON_KEY = 'sb_publishable_L4SfyknPe1qIHWa5mAcf-Q_LYH7jlfI';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let ricettario = [];
+let listaSpesa = [];
 let paginaCorrenteIndex = 0; 
 let paginaPrecedenteIndex = 0; 
 let idRicettaInModifica = null;
@@ -26,9 +32,23 @@ const formRicetta = document.getElementById('form-ricetta');
 
 const modalStorico = document.getElementById('modal-storico');
 
-// Selezione universale dei pulsanti di navigazione presenti nei footer
 const btnPrecElements = [document.getElementById('btn-prec-sx'), document.getElementById('btn-prec-dx')];
 const btnSuccElements = [document.getElementById('btn-succ-sx'), document.getElementById('btn-succ-dx')];
+
+// Caricamento iniziale dei dati dal Cloud Supabase
+async function caricaDatiDaCloud() {
+    try {
+        const resRicette = await supabaseClient.from('ricette').select('*');
+        if (resRicette.data) ricettario = resRicette.data;
+
+        const resSpesa = await supabaseClient.from('lista_spesa').select('*');
+        if (resSpesa.data) listaSpesa = resSpesa.data;
+
+        renderizzaLibro();
+    } catch (err) {
+        console.error("Errore caricamento dati da Supabase:", err);
+    }
+}
 
 // Listener per la navigazione universale
 btnPrecElements.forEach(btn => {
@@ -102,7 +122,7 @@ btnAnnulla.addEventListener('click', () => {
     idRicettaInModifica = null;
 });
 
-formRicetta.addEventListener('submit', (e) => {
+formRicetta.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const personeIniziali = parseInt(document.getElementById('persone').value);
@@ -120,6 +140,8 @@ formRicetta.addEventListener('submit', (e) => {
             ricetta.ingredientiBase = ingredientiInseriti;
             ricetta.preparazione = document.getElementById('preparazione').value;
             ricetta.note = document.getElementById('note').value;
+
+            await supabaseClient.from('ricette').upsert([ricetta]);
         }
     } else {
         const nuovaRicetta = {
@@ -137,18 +159,29 @@ formRicetta.addEventListener('submit', (e) => {
             prove: []
         };
         ricettario.push(nuovaRicetta);
+        await supabaseClient.from('ricette').insert([nuovaRicetta]);
     }
 
-    salvaDati();
     formRicetta.reset();
     idRicettaInModifica = null;
     modal.classList.add('hidden');
     renderizzaLibro();
 });
 
-function salvaDati() {
-    localStorage.setItem('ricettario_polillo', JSON.stringify(ricettario));
-    localStorage.setItem('lista_spesa_polillo', JSON.stringify(listaSpesa));
+async function salvaDati() {
+    // Salvataggio di backup locale se serve, ma gestiamo tutto sul cloud
+}
+
+async function aggiornaRicettaCloud(ricetta) {
+    await supabaseClient.from('ricette').upsert([ricetta]);
+    renderizzaLibro();
+}
+
+async function aggiornaSpesaCloud() {
+    await supabaseClient.from('lista_spesa').delete().neq('id', 0); // pulisce e ricarica
+    if (listaSpesa.length > 0) {
+        await supabaseClient.from('lista_spesa').insert(listaSpesa);
+    }
 }
 
 function esportaBackup() {
@@ -167,16 +200,22 @@ function importaBackup(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         try {
             const contenuto = JSON.parse(e.target.result);
             if (contenuto.ricettario) {
                 ricettario = contenuto.ricettario;
                 if (contenuto.listaSpesa) listaSpesa = contenuto.listaSpesa;
-                salvaDati();
+                
+                // Salva tutto su Supabase
+                await supabaseClient.from('ricette').delete().neq('id', 0);
+                if (ricettario.length > 0) await supabaseClient.from('ricette').insert(ricettario);
+
+                await aggiornaSpesaCloud();
+
                 paginaCorrenteIndex = 0;
                 renderizzaLibro();
-                alert("Backup importato con successo!");
+                alert("Backup importato e sincronizzato sul cloud!");
             } else {
                 alert("File di backup non valido.");
             }
@@ -187,12 +226,11 @@ function importaBackup(event) {
     reader.readAsText(file);
 }
 
-function impostaValutazione(idRicetta, stelle) {
+async function impostaValutazione(idRicetta, stelle) {
     const ricetta = ricettario.find(r => r.id === idRicetta);
     if (ricetta) {
         ricetta.valutazione = stelle;
-        salvaDati();
-        renderizzaLibro();
+        await aggiornaRicettaCloud(ricetta);
     }
 }
 
@@ -220,7 +258,7 @@ function chiudiFormNuovaProva() {
     document.getElementById('form-nuova-prova-box').style.display = 'none';
 }
 
-function salvaNuovaProva(e) {
+async function salvaNuovaProva(e) {
     e.preventDefault();
     const ricetta = ricettario.find(r => r.id === idRicettaStoricoAttiva);
     if (!ricetta) return;
@@ -247,13 +285,12 @@ function salvaNuovaProva(e) {
     const sommaStelle = ricetta.prove.reduce((acc, p) => acc + p.stelle, 0);
     ricetta.valutazione = Math.round(sommaStelle / ricetta.prove.length);
 
-    salvaDati();
+    await aggiornaRicettaCloud(ricetta);
     chiudiFormNuovaProva();
     renderizzaStoricoModal();
-    renderizzaLibro();
 }
 
-function eliminaProva(idProva) {
+async function eliminaProva(idProva) {
     const ricetta = ricettario.find(r => r.id === idRicettaStoricoAttiva);
     if (!ricetta || !ricetta.prove) return;
 
@@ -266,9 +303,8 @@ function eliminaProva(idProva) {
         ricetta.valutazione = 0;
     }
 
-    salvaDati();
+    await aggiornaRicettaCloud(ricetta);
     renderizzaStoricoModal();
-    renderizzaLibro();
 }
 
 function renderizzaStoricoModal() {
@@ -347,7 +383,6 @@ function renderizzaLibro() {
     const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
     const maxSpread = ricettario.length + 1;
 
-    // Gestione visibilità pulsanti di navigazione nei footer
     const mostraPrec = paginaCorrenteIndex > 0;
     const mostraSucc = isMobile ? paginaCorrenteIndex < maxMobileIndex : paginaCorrenteIndex < maxSpread;
 
@@ -848,9 +883,10 @@ function fermaTuttoAllarme() {
     fermaChefTimer();
 }
 
-function aggiungiAllaSpesaSilenzioso(nomeIngrediente, btnId) {
-    listaSpesa.push({ nome: nomeIngrediente, comprato: false });
-    salvaDati();
+async function aggiungiAllaSpesaSilenzioso(nomeIngrediente, btnId) {
+    listaSpesa.push({ id: Date.now() + Math.random(), nome: nomeIngrediente, comprato: false });
+    await aggiornaSpesaCloud();
+    renderizzaLibro();
 
     const btn = document.getElementById(btnId);
     if (btn) {
@@ -863,24 +899,24 @@ function aggiungiAllaSpesaSilenzioso(nomeIngrediente, btnId) {
     }
 }
 
-function toggleSpesa(index) {
+async function toggleSpesa(index) {
     if (listaSpesa[index]) {
         listaSpesa[index].comprato = !listaSpesa[index].comprato;
-        salvaDati();
+        await aggiornaSpesaCloud();
         renderizzaLibro();
     }
 }
 
-function rimuoviDaSpesa(index) {
+async function rimuoviDaSpesa(index) {
     listaSpesa.splice(index, 1);
-    salvaDati();
+    await aggiornaSpesaCloud();
     renderizzaLibro();
 }
 
-function svuotaSpesa() {
+async function svuotaSpesa() {
     if (confirm("Vuoi svuotare interamente la lista della spesa?")) {
         listaSpesa = [];
-        salvaDati();
+        await aggiornaSpesaCloud();
         renderizzaLibro();
     }
 }
@@ -922,7 +958,7 @@ function apriModificaRicetta(id) {
     modal.classList.remove('hidden');
 }
 
-function cambiaPorzioni(id, delta) {
+async function cambiaPorzioni(id, delta) {
     const ricetta = ricettario.find(r => r.id === id);
     if (!ricetta) return;
 
@@ -937,8 +973,7 @@ function cambiaPorzioni(id, delta) {
         return Number.isInteger(scalato) ? scalato : scalato.toFixed(1);
     });
 
-    salvaDati();
-    renderizzaLibro();
+    await aggiornaRicettaCloud(ricetta);
 }
 
 function vaiAllaRicetta(indiceArray) {
@@ -949,11 +984,14 @@ function vaiAllaRicetta(indiceArray) {
     renderizzaLibro();
 }
 
-function eliminaRicetta(id) {
+async function eliminaRicetta(id) {
     if (confirm("Vuoi eliminare questa ricetta?")) {
         ricettario = ricettario.filter(r => r.id !== id);
-        salvaDati();
+        await supabaseClient.from('ricette').delete().eq('id', id);
         paginaCorrenteIndex = 0;
         renderizzaLibro();
     }
 }
+
+// Avvia il caricamento dati appena si apre lo script
+caricaDatiDaCloud();
