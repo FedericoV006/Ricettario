@@ -215,47 +215,6 @@ async function aggiornaSpesaCloud() {
     }
 }
 
-function esportaBackup() {
-    const dati = { ricettario: ricettario, listaSpesa: listaSpesa };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dati, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "ricettario_polillo_backup.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-}
-
-function importaBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            const contenuto = JSON.parse(e.target.result);
-            if (contenuto.ricettario) {
-                ricettario = contenuto.ricettario;
-                if (contenuto.listaSpesa) listaSpesa = contenuto.listaSpesa;
-                
-                await supabaseClient.from('ricette').delete().neq('id', 0);
-                if (ricettario.length > 0) await supabaseClient.from('ricette').insert(ricettario);
-
-                await aggiornaSpesaCloud();
-
-                paginaCorrenteIndex = 0;
-                renderizzaLibro();
-                alert("Backup importato e sincronizzato sul cloud!");
-            } else {
-                alert("File di backup non valido.");
-            }
-        } catch (err) {
-            alert("Errore durante la lettura del file.");
-        }
-    };
-    reader.readAsText(file);
-}
-
 async function impostaValutazione(idRicetta, stelle) {
     const ricetta = ricettario.find(r => r.id === idRicetta);
     if (ricetta) {
