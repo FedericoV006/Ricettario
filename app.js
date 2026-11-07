@@ -6,10 +6,10 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 let ricettario = [];
 let listaSpesa = [];
 let paginaCorrenteIndex = 0; 
-let paginaPrecedenteIndex = 0; 
 let idRicettaInModifica = null;
 let idRicettaStoricoAttiva = null; 
 let filtroRicercaIndice = ""; 
+let ultimaPaginaPrimaDellaSpesa = 0;
 
 let passiCorrenti = [];
 let indicePassoAttivo = 0;
@@ -20,21 +20,13 @@ let chefTimerAttivo = false;
 let audioCtx = null;
 let ricettaIdCorrenteChef = null;
 
-const btnChiudi = document.getElementById('btn-chiudi-libro');
 const copertina = document.getElementById('libro-copertina');
 const libroAperto = document.getElementById('libro-aperto');
-
 const modal = document.getElementById('modal-ricetta');
-const btnNuovaRicetta = document.getElementById('btn-nuova-ricetta');
 const btnAnnulla = document.getElementById('btn-annulla');
 const formRicetta = document.getElementById('form-ricetta');
-
 const modalStorico = document.getElementById('modal-storico');
 
-const btnPrecElements = [document.getElementById('btn-prec-sx'), document.getElementById('btn-prec-dx')];
-const btnSuccElements = [document.getElementById('btn-succ-sx'), document.getElementById('btn-succ-dx')];
-
-// Caricamento iniziale dei dati dal Cloud Supabase
 async function caricaDatiDaCloud() {
     try {
         const resRicette = await supabaseClient.from('ricette').select('*');
@@ -49,35 +41,8 @@ async function caricaDatiDaCloud() {
     }
 }
 
-// Avvio immediato del caricamento da Supabase all'apertura dello script
 caricaDatiDaCloud();
 
-// Listener per la navigazione universale
-btnPrecElements.forEach(btn => {
-    if (btn) {
-        btn.addEventListener('click', () => {
-            if (paginaCorrenteIndex > 0) {
-                paginaCorrenteIndex--;
-                renderizzaLibro();
-            }
-        });
-    }
-});
-
-btnSuccElements.forEach(btn => {
-    if (btn) {
-        btn.addEventListener('click', () => {
-            const isMobile = window.innerWidth <= 1024;
-            const maxIndex = isMobile ? (ricettario.length + 2) * 2 - 1 : ricettario.length + 1;
-            if (paginaCorrenteIndex < maxIndex) {
-                paginaCorrenteIndex++;
-                renderizzaLibro();
-            }
-        });
-    }
-});
-
-// Copertina editoriale di lusso
 document.getElementById('libro-copertina').innerHTML = `
     <div class="dettagli-copertina">
         <img src="https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1000&q=85" alt="Cucina" class="copertina-bg-img">
@@ -101,12 +66,15 @@ document.getElementById('btn-apri-libro').addEventListener('click', () => {
     }, 300);
 });
 
-btnChiudi.addEventListener('click', () => {
-    libroAperto.classList.add('nascosto');
-    setTimeout(() => {
-        copertina.classList.remove('nascosto');
-    }, 300);
-});
+const btnChiudi = document.getElementById('btn-chiudi-libro');
+if (btnChiudi) {
+    btnChiudi.addEventListener('click', () => {
+        libroAperto.classList.add('nascosto');
+        setTimeout(() => {
+            copertina.classList.remove('nascosto');
+        }, 300);
+    });
+}
 
 document.addEventListener('click', (e) => {
     if (e.target && e.target.id === 'btn-nuova-ricetta') {
@@ -331,24 +299,82 @@ function renderizzaStoricoModal() {
     }).join('');
 }
 
+function ricalcolaIngrediente(ingredienteTesto, personeBase, personeAttuali) {
+    if (!personeBase || personeBase === personeAttuali || personeBase <= 0) return ingredienteTesto;
+    
+    return ingredienteTesto.replace(/(\d+(?:[.,]\d+)?)/g, (match) => {
+        const num = parseFloat(match.replace(',', '.'));
+        if (isNaN(num)) return match;
+        const proporzione = (num / personeBase) * personeAttuali;
+        return Number.isInteger(proporzione) ? proporzione : proporzione.toFixed(1).replace('.0', '');
+    });
+}
+
 function renderizzaLibro() {
     const titoloSxHeader = document.getElementById('titolo-sinistra-header');
     const titoloDxHeader = document.getElementById('titolo-destra-header');
     const contSx = document.getElementById('contenuto-pagina-sinistra');
     const contDx = document.getElementById('contenuto-pagina-destra');
-    const numPagSx = document.getElementById('num-pag-sx');
-    const numPagDx = document.getElementById('num-pag-dx');
+
+    const categorieMapping = [
+        { id: 'colazioni', titoloSezione: 'Colazioni & Bakery' },
+        { id: 'primi-mare', titoloSezione: 'Primi di Mare' },
+        { id: 'primi-terra', titoloSezione: 'Primi di Terra' },
+        { id: 'secondi-mare', titoloSezione: 'Secondi di Mare' },
+        { id: 'secondi-terra', titoloSezione: 'Secondi di Terra' },
+        { id: 'pizze', titoloSezione: 'Pizze & Lievitati' },
+        { id: 'contorni', titoloSezione: 'Contorni' },
+        { id: 'dolci', titoloSezione: 'Dolci & Pasticceria' }
+    ];
+
+    // Ordinamento rigoroso in base alle categorie dell'indice
+    ricettario.sort((a, b) => {
+        const idxA = categorieMapping.findIndex(c => c.id === a.categoria);
+        const idxB = categorieMapping.findIndex(c => c.id === b.categoria);
+        return idxA - idxB;
+    });
+
+    const isMobile = window.innerWidth <= 1024;
+    const maxSpread = ricettario.length + 1;
+    const maxIndex = isMobile ? (ricettario.length + 2) * 2 - 1 : maxSpread;
+
+    let spreadIndex = paginaCorrenteIndex;
+    if (isMobile) {
+        spreadIndex = Math.floor(paginaCorrenteIndex / 2);
+    }
+
+    const btnPrecSx = document.getElementById('btn-prec-sx');
+    const btnSuccDx = document.getElementById('btn-succ-dx');
+
+    const gestisciIndietro = () => {
+        if (paginaCorrenteIndex > 0) {
+            paginaCorrenteIndex--;
+            renderizzaLibro();
+        }
+    };
+
+    const gestisciAvanti = () => {
+        if (paginaCorrenteIndex < maxIndex) {
+            paginaCorrenteIndex++;
+            renderizzaLibro();
+        }
+    };
+
+    if (btnPrecSx) {
+        btnPrecSx.onclick = gestisciIndietro;
+        btnPrecSx.style.display = paginaCorrenteIndex > 0 ? 'inline-block' : 'none';
+    }
+
+    if (btnSuccDx) {
+        btnSuccDx.onclick = gestisciAvanti;
+        btnSuccDx.style.display = paginaCorrenteIndex < maxIndex ? 'inline-block' : 'none';
+    }
 
     const paginaSinistraEl = document.querySelector('.pagina-sinistra');
     const paginaDestraEl = document.querySelector('.pagina-destra');
 
-    const isMobile = window.innerWidth <= 1024;
-    
-    let spreadIndex = paginaCorrenteIndex;
     if (isMobile) {
-        spreadIndex = Math.floor(paginaCorrenteIndex / 2);
         const isRightPage = (paginaCorrenteIndex % 2 === 1);
-
         if (paginaSinistraEl && paginaDestraEl) {
             if (!isRightPage) {
                 paginaSinistraEl.classList.add('pagina-attiva-mobile');
@@ -365,31 +391,14 @@ function renderizzaLibro() {
         }
     }
 
-    const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
-    const maxSpread = ricettario.length + 1;
-
-    const mostraPrec = paginaCorrenteIndex > 0;
-    const mostraSucc = isMobile ? paginaCorrenteIndex < maxMobileIndex : paginaCorrenteIndex < maxSpread;
-
-    btnPrecElements.forEach(btn => { if (btn) btn.style.display = mostraPrec ? 'inline-block' : 'none'; });
-    btnSuccElements.forEach(btn => { if (btn) btn.style.display = mostraSucc ? 'inline-block' : 'none'; });
+    const numPagSxEl = document.getElementById('num-pag-sx');
+    const numPagDxEl = document.getElementById('num-pag-dx');
 
     if (spreadIndex === 0) {
         titoloSxHeader.textContent = "INDICE GENERALE";
         titoloDxHeader.textContent = "COLLEZIONE";
-        numPagSx.textContent = "1";
-        numPagDx.textContent = "2";
-
-        const categorieMapping = [
-            { id: 'colazioni', titoloSezione: 'Colazioni & Bakery' },
-            { id: 'primi-mare', titoloSezione: 'Primi di Mare' },
-            { id: 'primi-terra', titoloSezione: 'Primi di Terra' },
-            { id: 'secondi-mare', titoloSezione: 'Secondi di Mare' },
-            { id: 'secondi-terra', titoloSezione: 'Secondi di Terra' },
-            { id: 'pizze', titoloSezione: 'Pizze & Lievitati' },
-            { id: 'contorni', titoloSezione: 'Contorni' },
-            { id: 'dolci', titoloSezione: 'Dolci & Pasticceria' }
-        ];
+        if (numPagSxEl) numPagSxEl.textContent = "1";
+        if (numPagDxEl) numPagDxEl.textContent = "2";
 
         let htmlSx = `
             <div style="margin-bottom: 0.8rem;">
@@ -412,12 +421,13 @@ function renderizzaLibro() {
             } else {
                 htmlLista = ricetteCat.map(r => {
                     const indiceGlobale = ricettario.findIndex(item => item.id === r.id);
-                    const numeroPaginaLibro = (indiceGlobale + 1) * 2 + 1;
+                    const indiceSpreadRicetta = indiceGlobale + 1;
+                    const numeroPaginaLibro = indiceSpreadRicetta * 2 + 1;
                     return `
-                        <li class="voce-indice" onclick="vaiAllaRicetta(${indiceGlobale})" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;">
+                        <li class="voce-indice" onclick="vaiAllaRicettaIndice(${indiceSpreadRicetta})" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;">
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                                 <span style="font-weight: 600; font-size: 0.95rem;">${r.titolo}</span>
-                                <span style="font-size: 0.75rem; color: var(--testo-sfumato);">pag. ${numeroPaginaLibro}</span>
+                                <span style="font-size: 0.75rem; color: var(--testo-sfumato); text-align: right; min-width: 40px;">pag. ${numeroPaginaLibro}</span>
                             </div>
                             <div style="display: flex; gap: 1rem; align-items: center; width: 100%; justify-content: flex-end; margin-top: 0.2rem;" onclick="event.stopPropagation()">
                                 <button onclick="apriModificaRicetta(${r.id})" title="Modifica" style="background: none; border: none; cursor: pointer; font-size: 0.85rem;">✏️ Modifica</button>
@@ -439,7 +449,10 @@ function renderizzaLibro() {
         const pagListaSpesa = (ricettario.length + 1) * 2 + 1;
         htmlSx += `
             <div class="sezione-indice-gruppo" style="margin-top: 1.5rem; margin-bottom: 1rem; border-top: 1px dashed var(--colore-bordo); padding-top: 1rem;">
-                <h4 style="color: var(--oro-accento); cursor: pointer; font-size: 1rem;" onclick="vaiAllaSpesa()">🛒 LISTA DELLA SPESA (pag. ${pagListaSpesa})</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="vaiAllaSpesa()">
+                    <h4 style="color: var(--oro-accento); margin: 0; font-size: 1rem;">🛒 LISTA DELLA SPESA</h4>
+                    <span style="font-size: 0.75rem; color: var(--testo-sfumato);">pag. ${pagListaSpesa}</span>
+                </div>
             </div>
         `;
 
@@ -467,26 +480,32 @@ function renderizzaLibro() {
         const ricetta = ricettario[spreadIndex - 1];
         if (!ricetta) return;
 
+        const catOggetto = categorieMapping.find(c => c.id === ricetta.categoria);
+        const nomeCategoria = catOggetto ? catOggetto.titoloSezione.toUpperCase() : "RICETTA";
+
         titoloSxHeader.textContent = ricetta.titolo.toUpperCase();
-        titoloDxHeader.textContent = ricetta.titolo.toUpperCase();
+        titoloDxHeader.textContent = nomeCategoria;
         
         const pagDispari = spreadIndex * 2 + 1;
         const pagPari = pagDispari + 1;
-        numPagSx.textContent = pagDispari;
-        numPagDx.textContent = pagPari;
+        if (numPagSxEl) numPagSxEl.textContent = pagDispari;
+        if (numPagDxEl) numPagDxEl.textContent = pagPari;
 
         if (!ricetta.persone_base) ricetta.persone_base = ricetta.persone;
         if (!ricetta.ingredienti_base) ricetta.ingredienti_base = ricetta.ingredienti;
         if (ricetta.valutazione === undefined) ricetta.valutazione = 0;
         if (!ricetta.prove) ricetta.prove = [];
 
-        const righeIngredienti = ricetta.ingredienti.split('\n').filter(r => r.trim() !== '');
-        const htmlIngredienti = righeIngredienti.map((ing, i) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 0.95rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
-                <span>• ${ing}</span>
-                <button id="btn-carrello-${spreadIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ing.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
-            </div>
-        `).join('');
+        const righeIngredientiBase = ricetta.ingredienti_base.split('\n').filter(r => r.trim() !== '');
+        const htmlIngredienti = righeIngredientiBase.map((ingBase, i) => {
+            const ingRicalcolato = ricalcolaIngrediente(ingBase, ricetta.persone_base, ricetta.persone);
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 0.95rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
+                    <span>• ${ingRicalcolato}</span>
+                    <button id="btn-carrello-${spreadIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ingRicalcolato.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
+                </div>
+            `;
+        }).join('');
 
         let htmlNoteSezione = '';
         if (ricetta.note && ricetta.note.trim() !== '') {
@@ -554,7 +573,7 @@ function renderizzaLibro() {
 
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--colore-bordo); padding-bottom: 0.8rem; margin-bottom: 1rem;">
                         <h4 style="color: var(--testo-principale); margin: 0; font-size: 1.1rem; font-weight: 700;">Ingredienti</h4>
-                        <span style="font-size: 0.85rem; color: var(--testo-sfumato); font-weight: 600;">${righeIngredienti.length} voci</span>
+                        <span style="font-size: 0.85rem; color: var(--testo-sfumato); font-weight: 600;">${righeIngredientiBase.length} voci</span>
                     </div>
 
                     <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid var(--colore-bordo); border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem;">
@@ -600,8 +619,8 @@ function renderizzaLibro() {
         
         const pagDispari = spreadIndex * 2 + 1;
         const pagPari = pagDispari + 1;
-        numPagSx.textContent = pagDispari;
-        numPagDx.textContent = pagPari;
+        if (numPagSxEl) numPagSxEl.textContent = pagDispari;
+        if (numPagDxEl) numPagDxEl.textContent = pagPari;
 
         let htmlSpesaSx = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
@@ -618,9 +637,10 @@ function renderizzaLibro() {
             htmlSpesaSx += `<div style="max-height: 450px; overflow-y: auto; padding-right: 0.3rem;"><ul style="list-style: none; padding: 0; margin: 0;">`;
             listaSpesa.forEach((item, index) => {
                 htmlSpesaSx += `
-                    <li style="display: flex; align-items: center; justify-content: space-between; margin: 0.6rem 0; font-size: 1rem; ${item.comprato ? 'text-decoration: line-through; opacity: 0.4;' : ''}">
-                        <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; flex-grow: 1;">
-                            <input type="checkbox" ${item.comprato ? 'checked' : ''} onchange="toggleSpesa(${index})" style="cursor: pointer; width: 18px; height: 18px; accent-color: var(--oro-accento);">
+                    <li style="display: flex; align-items: center; justify-content: space-between; margin: 0.6rem 0; font-size: 1rem;" class="${item.comprato ? 'spesa-comprata' : ''}">
+                        <label class="custom-checkbox-label">
+                            <input type="checkbox" ${item.comprato ? 'checked' : ''} onchange="toggleSpesa(${index})" style="display: none;">
+                            <span class="custom-tick-box"></span>
                             <span>${item.nome}</span>
                         </label>
                         <button onclick="rimuoviDaSpesa(${index})" style="background: none; border: none; color: #b83232; cursor: pointer; font-size: 1.1rem;">×</button>
@@ -682,6 +702,17 @@ function avviaModalChef(idRicetta, passoIniziale = 0) {
     const titoloChefEl = document.getElementById('chef-fs-titolo-ricetta');
     if (titoloChefEl) titoloChefEl.textContent = ricetta.titolo.toUpperCase();
 
+    const bgChefEl = document.getElementById('chef-bg-sfocato');
+    if (bgChefEl) {
+        if (ricetta.foto && ricetta.foto.trim() !== '') {
+            bgChefEl.style.backgroundImage = `url('${ricetta.foto}')`;
+            bgChefEl.style.display = 'block';
+        } else {
+            bgChefEl.style.backgroundImage = 'none';
+            bgChefEl.style.display = 'none';
+        }
+    }
+
     mostraPassoChefCorrente();
     
     const modalChef = document.getElementById('modal-chef');
@@ -692,6 +723,7 @@ function mostraPassoChefCorrente() {
     const containerTesto = document.getElementById('chef-fs-testo');
     const indicatoreStep = document.getElementById('chef-fs-step-indicatore');
     const barraContainer = document.getElementById('chef-fs-barre');
+    const btnSucc = document.getElementById('chef-fs-btn-succ');
     
     if (passiCorrenti.length > 0) {
         if (containerTesto) containerTesto.textContent = passiCorrenti[indicePassoAttivo];
@@ -699,6 +731,14 @@ function mostraPassoChefCorrente() {
     } else {
         if (containerTesto) containerTesto.textContent = "Nessun passaggio disponibile.";
         if (indicatoreStep) indicatoreStep.textContent = "PASSAGGIO 1";
+    }
+
+    if (btnSucc) {
+        if (indicePassoAttivo === passiCorrenti.length - 1) {
+            btnSucc.textContent = "Fine ✓";
+        } else {
+            btnSucc.textContent = "Avanti →";
+        }
     }
 
     if (barraContainer) {
@@ -735,6 +775,8 @@ function passoSuccessivo() {
         indicePassoAttivo++;
         fermaTuttoAllarme();
         mostraPassoChefCorrente();
+    } else {
+        chiudiModalChef();
     }
 }
 
@@ -760,15 +802,6 @@ function impostaTimerDaMatch(stringaTempo) {
 
     chefSecondiTotali = secondi;
     chefSecondiRimanenti = secondi;
-    
-    let displayEl = document.getElementById('chef-timer-display');
-    if (!displayEl && document.getElementById('chef-fs-timer-container')) {
-        document.getElementById('chef-fs-timer-container').innerHTML = `
-            <span id="chef-timer-display" style="font-size: 1.2rem; font-weight: bold; margin-right: 10px;">00:00</span>
-            <button onclick="avviaChefTimer()" class="btn-piccolo" style="background: var(--oro-accento); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Avvia</button>
-            <button onclick="pausaChefTimer()" class="btn-piccolo" style="background: #ccc; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 4px;">Pausa</button>
-        `;
-    }
     aggiornaDisplayTimer();
 }
 
@@ -800,6 +833,12 @@ function pausaChefTimer() {
     clearInterval(chefTimerInterval);
 }
 
+function resetChefTimer() {
+    fermaChefTimer();
+    chefSecondiRimanenti = chefSecondiTotali;
+    aggiornaDisplayTimer();
+}
+
 function fermaChefTimer() {
     chefTimerAttivo = false;
     clearInterval(chefTimerInterval);
@@ -829,22 +868,31 @@ function aggiornaDisplayTimer() {
 function suonaAllarmeFineTimer() {
     if (!audioCtx) return;
     try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 1.2);
+        let beeps = 0;
+        const intervalId = setInterval(() => {
+            if (beeps >= 6 || !audioCtx) {
+                clearInterval(intervalId);
+                return;
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            beeps++;
+        }, 250);
     } catch (e) {
         console.log("Audio non supportato o bloccato dal browser");
     }
 }
 
-function vaiAllaRicetta(indiceGlobale) {
-    paginaCorrenteIndex = (indiceGlobale + 1) * 2;
+function vaiAllaRicettaIndice(spreadIndexTarget) {
+    const isMobile = window.innerWidth <= 1024;
+    paginaCorrenteIndex = isMobile ? spreadIndexTarget * 2 : spreadIndexTarget;
     renderizzaLibro();
 }
 
@@ -854,12 +902,15 @@ function vaiAllIndice() {
 }
 
 function vaiAllaSpesa() {
-    paginaCorrenteIndex = (ricettario.length + 1) * 2;
+    ultimaPaginaPrimaDellaSpesa = paginaCorrenteIndex;
+    const isMobile = window.innerWidth <= 1024;
+    const spreadSpesa = ricettario.length + 1;
+    paginaCorrenteIndex = isMobile ? spreadSpesa * 2 : spreadSpesa;
     renderizzaLibro();
 }
 
 function tornaIndietroDaSpesa() {
-    paginaCorrenteIndex = 0;
+    paginaCorrenteIndex = ultimaPaginaPrimaDellaSpesa;
     renderizzaLibro();
 }
 
@@ -906,6 +957,20 @@ function cambiaPorzioni(idRicetta, delta) {
     ricetta.persone = Math.max(1, ricetta.persone + delta);
     const spanPersone = document.getElementById('span-persone');
     if (spanPersone) spanPersone.textContent = ricetta.persone;
+
+    const righeIngredientiBase = ricetta.ingredienti_base.split('\n').filter(r => r.trim() !== '');
+    const htmlIngredienti = righeIngredientiBase.map((ingBase, i) => {
+        const ingRicalcolato = ricalcolaIngrediente(ingBase, ricetta.persone_base, ricetta.persone);
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 0.95rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
+                <span>• ${ingRicalcolato}</span>
+                <button id="btn-carrello-${paginaCorrenteIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ingRicalcolato.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
+            </div>
+        `;
+    }).join('');
+
+    const testoIngredientiEl = document.getElementById('testo-ingredienti');
+    if (testoIngredientiEl) testoIngredientiEl.innerHTML = htmlIngredienti;
 }
 
 function toggleSpesa(index) {

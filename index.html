@@ -30,31 +30,26 @@
                     <!-- Contenuto dinamico -->
                 </div>
 
-                <div class="footer-pagina" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 5;">
+                <div class="footer-pagina">
                     <button id="btn-prec-sx" class="btn-classico btn-nav-footer">← Indietro</button>
                     <span id="num-pag-sx" class="numero-pagina">1</span>
-                    <button id="btn-succ-sx" class="btn-classico btn-nav-footer">Avanti →</button>
                 </div>
             </div>
 
             <!-- PAGINA DESTRA -->
             <div class="pagina pagina-destra">
-                <div class="header-pagina-libro">
+                <div class="header-pagina-libro" style="display: flex; justify-content: space-between; align-items: center;">
+                    <button id="btn-chiudi-libro" class="btn-piccolo" style="color: #b83232; font-weight: 700; background: none; border: none; cursor: pointer; font-size: 0.75rem; letter-spacing: 1px;">✕ RIPONI VOLUME</button>
                     <span id="titolo-destra-header" class="capitolo-corrente">COLLEZIONE</span>
-                    <span style="font-size: 0.8rem; color: var(--testo-sfumato);">✦</span>
                 </div>
                 
                 <div id="contenuto-pagina-destra" class="corpo-pagina">
                     <!-- Contenuto dinamico -->
                 </div>
 
-                <div class="footer-pagina" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 5;">
-                    <button id="btn-prec-dx" class="btn-classico btn-nav-footer">← Indietro</button>
+                <div class="footer-pagina">
                     <span id="num-pag-dx" class="numero-pagina">2</span>
-                    <div style="display: flex; align-items: center; gap: 0.8rem;">
-                        <button id="btn-succ-dx" class="btn-classico btn-nav-footer">Avanti →</button>
-                        <button id="btn-chiudi-libro" class="btn-piccolo" style="color: #b83232; font-weight: 700; background: none; border: none; cursor: pointer;">✕ Riponi Volume</button>
-                    </div>
+                    <button id="btn-succ-dx" class="btn-classico btn-nav-footer">Avanti →</button>
                 </div>
             </div>
 
@@ -93,7 +88,7 @@
                     <input type="number" id="persone" value="4" min="1" required>
                 </div>
                 <div>
-                    <label for="ingredienti">Ingredienti (uno per riga)</label>
+                    <label for="ingredienti">Ingredienti (uno per riga - es: 200g farina)</label>
                     <textarea id="ingredienti" rows="5" required placeholder="200g farina&#10;100g zucchero"></textarea>
                 </div>
                 <div>
@@ -162,14 +157,23 @@
 
     <!-- MODALITÀ CUCINA FULLSCREEN -->
     <div id="modal-chef" class="modal-overlay-chef hidden">
-        <div id="chef-sfondo-container"></div>
+        <div id="chef-bg-sfocato" class="chef-bg-sfocato"></div>
         <div class="chef-overlay-scuro"></div>
         
         <div class="chef-fullscreen-container">
             <div class="chef-fs-header">
                 <div id="chef-fs-titolo-ricetta" class="chef-fs-titolo-ricetta">RICETTA</div>
-                <div id="chef-fs-timer-container"></div>
                 <button class="chef-fs-chiudi" onclick="chiudiModalChef()">✕</button>
+            </div>
+
+            <!-- NUOVO TIMER DA CUCINA STILE DIAL / SCHERMO GRANDE -->
+            <div id="chef-fs-timer-container" class="timer-cucina-nuovo" style="display: none;">
+                <div class="timer-display-grande" id="chef-timer-display">00:00</div>
+                <div class="timer-pulsanti-box">
+                    <button onclick="avviaChefTimer()" class="timer-btn-azione avvia">▶ Avvia</button>
+                    <button onclick="pausaChefTimer()" class="timer-btn-azione pausa">⏸ Pausa</button>
+                    <button onclick="resetChefTimer()" class="timer-btn-azione reset">↺ Reset</button>
+                </div>
             </div>
 
             <div class="chef-fs-barra-container" id="chef-fs-barre"></div>

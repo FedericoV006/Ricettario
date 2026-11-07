@@ -259,6 +259,7 @@ body {
     transform: translateX(4px);
 }
 
+/* FOOTER E NUMERI DI PAGINA PERFETTAMENTE CENTRATI */
 .footer-pagina {
     display: flex;
     justify-content: space-between;
@@ -268,9 +269,13 @@ body {
     margin-top: auto;
     height: 50px;
     box-sizing: border-box;
+    position: relative;
 }
 
 .numero-pagina {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 0.85rem;
     color: var(--testo-sfumato);
     font-weight: 500;
@@ -312,6 +317,47 @@ body {
 .btn-piccolo:hover {
     color: var(--oro-accento);
     transform: scale(1.05);
+}
+
+/* Checkbox elegante personalizzato (Lista Spesa) */
+.custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    flex-grow: 1;
+    user-select: none;
+}
+
+.custom-tick-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--oro-accento);
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.custom-checkbox-label input:checked ~ .custom-tick-box {
+    background: var(--oro-accento);
+    border-color: var(--oro-accento);
+    box-shadow: 0 2px 6px rgba(212, 175, 55, 0.3);
+}
+
+.custom-checkbox-label input:checked ~ .custom-tick-box::after {
+    content: '✓';
+    color: #141414;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.spesa-comprata span {
+    text-decoration: line-through;
+    opacity: 0.45;
 }
 
 /* Modali */
@@ -518,7 +564,7 @@ body {
     gap: 6px;
 }
 
-/* Modalità Cucina Fullscreen */
+/* Modalità Cucina Fullscreen & Sfondo Sfumato */
 .modal-overlay-chef {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -530,10 +576,21 @@ body {
     overflow: hidden;
 }
 
+.chef-bg-sfocato {
+    position: absolute;
+    top: -20px; left: -20px; right: -20px; bottom: -20px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(16px) brightness(0.4);
+    transform: scale(1.1);
+    z-index: 1;
+    display: none;
+}
+
 .chef-overlay-scuro {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(12, 12, 12, 0.75);
+    background: rgba(12, 12, 12, 0.82);
     z-index: 2;
 }
 
@@ -567,7 +624,77 @@ body {
     text-transform: uppercase; color: var(--oro-accento); font-weight: 600;
 }
 
-.chef-fs-barra-container { display: flex; gap: 6px; width: 100%; margin: 1.5rem 0; }
+/* --- NUOVO TIMER DA CUCINA ELEGANTE E CENTRATO --- */
+.timer-cucina-nuovo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 20, 20, 0.75);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    padding: 1.2rem 2rem;
+    border-radius: 20px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    margin: 1rem auto;
+    max-width: 320px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.timer-display-grande {
+    font-family: monospace;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--oro-accento);
+    letter-spacing: 3px;
+    margin-bottom: 0.8rem;
+    text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+}
+
+.timer-pulsanti-box {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.timer-btn-azione {
+    flex: 1;
+    padding: 0.5rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.timer-btn-azione.avvia {
+    background: var(--oro-accento);
+    color: #141414;
+}
+.timer-btn-azione.avvia:hover {
+    background: #ffffff;
+}
+
+.timer-btn-azione.pausa {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+.timer-btn-azione.pausa:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.timer-btn-azione.reset {
+    background: rgba(184, 50, 50, 0.2);
+    color: #ff9999;
+}
+.timer-btn-azione.reset:hover {
+    background: rgba(184, 50, 50, 0.4);
+}
+
+.chef-fs-barra-container { display: flex; gap: 6px; width: 100%; margin: 1rem 0; }
 .chef-fs-corpo { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; max-width: 800px; }
 .chef-fs-step-indicatore { font-size: 0.8rem; letter-spacing: 2px; color: var(--oro-accento); margin-bottom: 0.8rem; text-transform: uppercase; font-weight: 600; }
 .chef-fs-testo { font-size: 1.8rem; line-height: 1.3; color: #ffffff; font-weight: 500; margin-bottom: 1.5rem; }
