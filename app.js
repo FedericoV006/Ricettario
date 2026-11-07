@@ -526,7 +526,7 @@ function renderizzaLibro() {
         `;
 
         // ==========================================
-        // PAGINA DESTRA: PREPARAZIONE E NOTE DELLO CHEF (Senza bordi doppi)
+        // PAGINA DESTRA: PREPARAZIONE E NOTE DELLO CHEF
         // ==========================================
         contDx.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
@@ -861,6 +861,11 @@ function vaiAllaSpesa() {
 function tornaIndietroDaSpesa() {
     paginaCorrenteIndex = paginaPrecedenteIndex; 
     renderizzaLibro();
+}
+
+function vaiAllIndice() {
+    paginaCorrenteIndex = 0;
+    renderizzaLiblog(); // corretto sotto in renderizzaLibro
 }
 
 function vaiAllIndice() {
