@@ -1,0 +1,702 @@
+:root {
+    --colore-sfondo: #0c0c0c;
+    --colore-scheda: #ffffff;
+    --testo-principale: #141414;
+    --testo-sfumato: #666666;
+    --oro-accento: #d4af37;
+    --oro-hover: #e6c55c;
+    --colore-bordo: #e5e5e5;
+    --colore-carta: #faf9f6;
+}
+
+body {
+    background-color: var(--colore-sfondo);
+    color: var(--testo-principale);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.scrivania {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    perspective: 2000px;
+}
+
+/* COPERTINA EDITORIALE DI LUSSO */
+.libro-copertina {
+    background-color: #1a1a1a;
+    width: 480px;
+    height: 680px;
+    border-radius: 16px;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(212, 175, 55, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    overflow: hidden;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+    z-index: 20;
+}
+
+.libro-copertina.nascosto {
+    transform: scale(0.9) translateY(40px) rotateX(10deg);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.dettagli-copertina {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-sizing: border-box;
+}
+
+.copertina-bg-img {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    filter: brightness(0.7);
+}
+
+.copertina-overlay-sfumatura {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.1) 100%);
+    z-index: 2;
+}
+
+.copertina-contenuto-box {
+    position: relative;
+    z-index: 3;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.etichetta-copertina {
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--oro-accento);
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+}
+
+.titolo-copertina {
+    font-size: 2.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    font-weight: 700;
+    margin: 0 0 0.4rem 0;
+    line-height: 1.05;
+}
+
+.sottotitolo-copertina {
+    font-size: 0.85rem;
+    letter-spacing: 1.5px;
+    color: #e0e0e0;
+    font-weight: 400;
+    margin-bottom: 2rem;
+}
+
+.btn-apri-copertina {
+    background: var(--oro-accento);
+    color: #141414;
+    border: none;
+    padding: 0.85rem 2.2rem;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.btn-apri-copertina:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+}
+
+/* LIBRO APERTO */
+.libro-aperto {
+    display: flex;
+    background-color: var(--colore-carta);
+    border-radius: 16px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(212, 175, 55, 0.15);
+    width: 1280px;
+    height: 820px;
+    position: absolute;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.libro-aperto.nascosto {
+    transform: scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.libro-aperto::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--colore-bordo);
+    z-index: 10;
+}
+
+.pagina {
+    flex: 1;
+    padding: 2.8rem 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    overflow: hidden;
+    animation: fadeInPagina 0.4s ease-out;
+}
+
+@keyframes fadeInPagina {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pagina-sinistra { background-color: var(--colore-carta); }
+.pagina-destra { background-color: var(--colore-carta); }
+
+.header-pagina-libro {
+    text-align: left;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid var(--colore-bordo);
+    padding-bottom: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.capitolo-corrente {
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--testo-sfumato);
+    font-weight: 600;
+}
+
+.indice-romanzo-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    max-height: 520px;
+}
+
+.sezione-indice-gruppo { margin-bottom: 1.2rem; }
+
+.sezione-indice-gruppo h4 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #141414;
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+}
+
+.lista-capitoli { list-style: none; padding: 0; margin: 0; }
+
+.voce-indice {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+    margin: 0.4rem 0;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.voce-indice:hover {
+    background: rgba(212, 175, 55, 0.1);
+    transform: translateX(4px);
+}
+
+.footer-pagina {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--colore-bordo);
+    padding-top: 1rem;
+    margin-top: auto;
+    height: 50px;
+    box-sizing: border-box;
+}
+
+.destra-footer { justify-content: flex-end; }
+
+.numero-pagina {
+    font-size: 0.85rem;
+    color: var(--testo-sfumato);
+    font-weight: 500;
+}
+
+/* Pulsanti */
+.btn-classico {
+    background-color: #141414;
+    border: 1px solid var(--oro-accento);
+    padding: 0.75rem 1.6rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-classico:hover {
+    background-color: var(--oro-accento);
+    color: #141414;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.3);
+}
+
+.btn-piccolo {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--testo-sfumato);
+    cursor: pointer;
+    font-weight: 600;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.btn-piccolo:hover {
+    color: var(--oro-accento);
+    transform: scale(1.05);
+}
+
+/* Modali */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeInModal 0.3s ease;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-content-classico {
+    background: #ffffff;
+    border: 1px solid var(--oro-accento);
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleUpModal {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content-classico h2 {
+    margin-top: 0;
+    color: var(--testo-principale);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.modal-content-classico form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.modal-content-classico label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--testo-sfumato);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-content-classico input, 
+.modal-content-classico select, 
+.modal-content-classico textarea {
+    background: #f8f8f8;
+    border: 1px solid var(--colore-bordo);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.modal-content-classico input:focus, 
+.modal-content-classico select:focus, 
+.modal-content-classico textarea:focus {
+    outline: none;
+    border-color: var(--oro-accento);
+    background: #ffffff;
+}
+
+.modal-azioni {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Storico prove card */
+.prova-card {
+    background: #ffffff;
+    border: 1px solid var(--colore-bordo);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* Layout Ricetta */
+.ricetta-layout-moderno {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.ricetta-header-grid {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.ricetta-foto-principale {
+    width: 220px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.ricetta-foto-principale:hover { transform: scale(1.02); }
+
+.ricetta-info-testo h2 {
+    margin: 0 0 0.4rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--testo-principale);
+    line-height: 1.1;
+}
+
+.ricetta-meta-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--oro-accento);
+    margin-bottom: 0.5rem;
+}
+
+/* Sistema di stelle */
+.stelle-valutazione {
+    display: inline-flex;
+    gap: 2px;
+    cursor: pointer;
+}
+
+.stella {
+    font-size: 0.9rem;
+    color: #d1d1d1;
+    transition: color 0.15s ease;
+}
+
+.stella.attiva { color: var(--oro-accento); }
+
+.box-note-chef {
+    margin-top: 1rem;
+    background: rgba(212, 175, 55, 0.08);
+    border-left: 3px solid var(--oro-accento);
+    padding: 0.8rem 1rem;
+    border-radius: 0 8px 8px 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.passo-preparazione-card {
+    background: #ffffff;
+    border: 1px solid var(--colore-bordo);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.passo-numero-cerchio {
+    background: #141414;
+    color: var(--oro-accento);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.passo-contenuto { flex-grow: 1; font-size: 1rem; line-height: 1.5; }
+
+.btn-avvia-minuto {
+    background: #f5f3ed;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #141414;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-avvia-minuto:hover { background: var(--oro-accento); color: #141414; }
+
+.btn-modalita-cucina-principale {
+    background: #141414;
+    color: #ffffff;
+    border: 1px solid var(--oro-accento);
+    padding: 0.65rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Modalità Cucina Fullscreen con Sfondo Sfumato */
+.modal-overlay-chef {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #0c0c0c;
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.chef-bg-sfumato {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(18px) brightness(0.35);
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.chef-overlay-scuro {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(12, 12, 12, 0.75);
+    z-index: 2;
+}
+
+.chef-fullscreen-container {
+    width: 100%;
+    max-width: 900px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3.5rem 2.5rem;
+    box-sizing: border-box;
+    color: #ffffff;
+    position: relative;
+    z-index: 3;
+}
+
+.chef-fs-header { display: flex; justify-content: space-between; align-items: center; }
+
+.chef-fs-chiudi {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #ffffff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.chef-fs-titolo-ricetta {
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--oro-accento);
+    font-weight: 600;
+}
+
+.chef-fs-badge-attivo {
+    background: rgba(212, 175, 55, 0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--oro-accento);
+    font-weight: 600;
+}
+
+.chef-fs-barra-container { display: flex; gap: 8px; width: 100%; margin: 2rem 0; }
+
+.chef-fs-segmento {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.chef-fs-segmento.attivo { background: var(--oro-accento); }
+
+.chef-fs-corpo {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 800px;
+}
+
+.chef-fs-step-indicatore {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: var(--oro-accento);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.chef-fs-testo {
+    font-size: 2.2rem;
+    line-height: 1.4;
+    color: #ffffff;
+    font-weight: 500;
+    margin-bottom: 2rem;
+}
+
+.chef-fs-btn-timer {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: #ffffff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chef-fs-timer-attivo-box {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    padding: 12px 22px;
+    border-radius: 12px;
+    width: fit-content;
+    margin-top: 1rem;
+}
+
+.chef-fs-timer-display {
+    font-size: 2.2rem;
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--oro-accento);
+}
+
+.chef-fs-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; }
+
+.chef-fs-btn-nav {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chef-fs-btn-nav.primario {
+    background: var(--oro-accento);
+    color: #141414;
+    border-color: var(--oro-accento);
+    font-weight: 700;
+}
+.modal-overlay-chef.hidden { display: none; }

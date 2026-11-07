@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Mio Ricettario Personale</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="scrivania">
+        
+        <!-- COPERTINA -->
+        <div id="libro-copertina" class="libro-copertina">
+            <!-- Generata dinamicamente da JS -->
+        </div>
+
+        <!-- LIBRO APERTO -->
+        <div id="libro-aperto" class="libro-aperto nascosto">
+            
+            <!-- PAGINA SINISTRA -->
+            <div class="pagina pagina-sinistra">
+                <div class="header-pagina-libro">
+                    <span id="titolo-sinistra-header" class="capitolo-corrente">INDICE GENERALE</span>
+                    <span class="decorazione-linea">✦</span>
+                </div>
+                
+                <div id="contenuto-pagina-sinistra" class="corpo-pagina">
+                    <!-- Contenuto dinamico -->
+                </div>
+
+                <!-- Footer pagina sinistra invertito: Numero pagina a sinistra di tutto -->
+                <div class="footer-pagina">
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: flex-start;">
+                        <span id="num-pag-sx" class="numero-pagina" style="margin-right: auto;">1</span>
+                        <button id="btn-prec" class="btn-piccolo">← Pagina Precedente</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGINA DESTRA -->
+            <div class="pagina pagina-destra">
+                <div class="header-pagina-libro">
+                    <span id="titolo-destra-header" class="capitolo-corrente">COLLEZIONE</span>
+                    <span class="decorazione-linea">✦</span>
+                </div>
+
+                <div id="contenuto-pagina-destra" class="corpo-pagina">
+                    <!-- Contenuto dinamico -->
+                </div>
+
+                <!-- Footer pagina destra: Numero pagina all'estrema destra -->
+                <div class="footer-pagina destra-footer">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
+                        <button onclick="esportaBackup()" class="btn-piccolo" title="Scarica backup ricette" style="font-size: 0.8rem;">📥 Esporta</button>
+                        <label class="btn-piccolo" title="Carica backup ricette" style="font-size: 0.8rem; cursor: pointer;">
+                            📤 Importa <input type="file" id="file-import" accept=".json" onchange="importaBackup(event)" style="display: none;">
+                        </label>
+                        <button id="btn-succ" class="btn-piccolo">Pagina Successiva →</button>
+                        <button id="btn-chiudi-libro" class="btn-piccolo" style="color: #b83232;">✕ Chiudi</button>
+                        <span id="num-pag-dx" class="numero-pagina" style="margin-left: auto;">2</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODALE AGGIUNGI / MODIFICA RICETTA -->
+    <div id="modal-ricetta" class="modal-overlay hidden">
+        <div class="modal-content-classico">
+            <h2>Nuova Ricetta</h2>
+            <form id="form-ricetta">
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="titolo">Titolo della Ricetta</label>
+                    <input type="text" id="titolo" required placeholder="Es. Torta di mele della nonna">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="categoria">Categoria / Reparto</label>
+                    <select id="categoria" required>
+                        <option value="colazioni">Colazioni & Bakery</option>
+                        <option value="primi-mare">Primi di Mare</option>
+                        <option value="primi-terra">Primi di Terra</option>
+                        <option value="secondi-mare">Secondi di Mare</option>
+                        <option value="secondi-terra">Secondi di Terra</option>
+                        <option value="pizze">Pizze & Lievitati</option>
+                        <option value="contorni">Contorni</option>
+                        <option value="dolci">Dolci & Pasticceria</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="foto">URL Immagine (facoltativo)</label>
+                    <input type="url" id="foto" placeholder="https://images.unsplash.com/...">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="persone">Numero Persone / Porzioni Base</label>
+                    <input type="number" id="persone" min="1" value="4" required>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="ingredienti">Ingredienti (uno per riga)</label>
+                    <textarea id="ingredienti" rows="5" required placeholder="200g di farina&#10;2 uova&#10;100g di zucchero"></textarea>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="preparazione">Preparazione (usa i numeri es. 1. 2. o scrivi i passi)</label>
+                    <textarea id="preparazione" rows="6" required placeholder="1. Mescola la farina con le uova per 5 minuti.&#10;2. Cuoci in forno a 180 gradi per 30 minuti."></textarea>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label for="note">Note dello Chef (facoltativo)</label>
+                    <textarea id="note" rows="2" placeholder="Consigli per la conservazione o varianti..."></textarea>
+                </div>
+
+                <div class="modal-azioni">
+                    <button type="button" id="btn-annulla" class="btn-piccolo">Annulla</button>
+                    <button type="submit" class="btn-classico">Salva Ricetta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE STORICO DELLE PROVE -->
+    <div id="modal-storico" class="modal-overlay hidden">
+        <div class="modal-content-classico" style="max-width: 680px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="margin: 0;">Storico delle prove</h2>
+                    <div id="storico-sottotitolo" style="font-size: 0.9rem; color: var(--testo-sfumato); margin-top: 0.3rem;">★ 4.9 • 7 prove registrate</div>
+                </div>
+                <button class="btn-classico" onclick="apriFormNuovaProva()" style="font-size: 0.85rem; padding: 0.5rem 1rem;">+ Segna una prova</button>
+            </div>
+
+            <div id="form-nuova-prova-box" style="display: none; background: #f9f8f5; border: 1px solid var(--colore-bordo); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.8rem 0; color: var(--testo-principale);">Registra nuovo esperimento</h4>
+                <form id="form-prova" onsubmit="salvaNuovaProva(event)" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Data</label>
+                            <input type="date" id="prova-data" required style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--colore-bordo); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Valutazione (1-5 stelle)</label>
+                            <select id="prova-stelle" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--colore-bordo); box-sizing: border-box;">
+                                <option value="5">★★★★★ (5/5)</option>
+                                <option value="4">★★★★☆ (4/5)</option>
+                                <option value="3">★★★☆☆ (3/5)</option>
+                                <option value="2">★★☆☆☆ (2/5)</option>
+                                <option value="1">★☆☆☆☆ (1/5)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Note / Modifiche apportate</label>
+                        <textarea id="prova-nota" rows="2" placeholder="Es. Con nocciole tostate, cottura perfetta..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--colore-bordo); box-sizing: border-box;"></textarea>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.5rem;">
+                        <button type="button" class="btn-piccolo" onclick="chiudiFormNuovaProva()">Annulla</button>
+                        <button type="submit" class="btn-classico" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Salva Prova</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="lista-prove-container" style="max-height: 420px; overflow-y: auto; padding-right: 0.3rem;"></div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--colore-bordo); padding-top: 1rem;">
+                <button class="btn-classico" onclick="chiudiStoricoProve()" style="font-size: 0.9rem; padding: 0.6rem 1.5rem;">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALITÀ CHEF FULLSCREEN -->
+    <div id="modal-chef" class="modal-overlay-chef hidden">
+        <div id="chef-sfondo-container"></div>
+        <div class="chef-fullscreen-container">
+            <div class="chef-fs-header">
+                <button class="chef-fs-chiudi" onclick="chiudiModalChef()">✕</button>
+                <div id="chef-fs-titolo-ricetta" class="chef-fs-titolo-ricetta">TITOLO RICETTA</div>
+                <div class="chef-fs-badge-attivo">SCHERMO ATTIVO</div>
+            </div>
+
+            <div id="chef-fs-barre" class="chef-fs-barra-container"></div>
+
+            <div class="chef-fs-corpo">
+                <div id="chef-fs-step-indicatore" class="chef-fs-step-indicatore">PASSAGGIO 1 DI 3</div>
+                <div id="chef-fs-testo" class="chef-fs-testo">Testo del passaggio in corso...</div>
+                <div id="chef-fs-timer-container"></div>
+            </div>
+
+            <div class="chef-fs-footer">
+                <button id="chef-fs-btn-prec" class="chef-fs-btn-nav" onclick="passoPrecedente()">← Indietro</button>
+                <button id="chef-fs-btn-succ" class="chef-fs-btn-nav primario" onclick="passoSuccessivo()">Avanti →</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
