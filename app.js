@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://bzrukvwbiofqoqavctgj.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_L4SfyknPe1qIHWa5mAcf-Q_LYH7jlfI';
+
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let ricettario = [];
@@ -139,6 +140,7 @@ formRicetta.addEventListener('submit', async (e) => {
             ricetta.preparazione = document.getElementById('preparazione').value;
             ricetta.note = document.getElementById('note').value;
 
+            // Salva le modifiche sul cloud
             await supabaseClient.from('ricette').upsert([ricetta]);
         }
     } else {
@@ -157,6 +159,8 @@ formRicetta.addEventListener('submit', async (e) => {
             prove: []
         };
         ricettario.push(nuovaRicetta);
+        
+        // Inserisce la nuova ricetta direttamente sul cloud Supabase
         await supabaseClient.from('ricette').insert([nuovaRicetta]);
     }
 
@@ -993,3 +997,15 @@ async function eliminaRicetta(id) {
 
 // Avvia il caricamento dati appena si apre lo script
 caricaDatiDaCloud();
+
+// Funzione per caricare i dati da Supabase all'avvio della pagina
+async function caricaDatiDaSupabase() {
+    const { data, error } = await supabaseClient.from('ricette').select('*');
+    if (!error && data) {
+        ricettario = data;
+        renderizzaLibro();
+    }
+}
+
+// Esegue il caricamento appena si apre la pagina
+caricaDatiDaSupabase();
