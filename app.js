@@ -49,6 +49,9 @@ async function caricaDatiDaCloud() {
     }
 }
 
+// Avvio immediato del caricamento da Supabase all'apertura dello script
+caricaDatiDaCloud();
+
 // Listener per la navigazione universale
 btnPrecElements.forEach(btn => {
     if (btn) {
@@ -140,7 +143,20 @@ formRicetta.addEventListener('submit', async (e) => {
             ricetta.preparazione = document.getElementById('preparazione').value;
             ricetta.note = document.getElementById('note').value;
 
-            await supabaseClient.from('ricette').upsert([ricetta], { onConflict: 'id' });
+            await supabaseClient
+                .from('ricette')
+                .update({
+                    titolo: ricetta.titolo,
+                    categoria: ricetta.categoria,
+                    foto: ricetta.foto,
+                    persone: ricetta.persone,
+                    persone_base: ricetta.persone_base,
+                    ingredienti: ricetta.ingredienti,
+                    ingredienti_base: ricetta.ingredienti_base,
+                    preparazione: ricetta.preparazione,
+                    note: ricetta.note
+                })
+                .eq('id', ricetta.id);
         }
     } else {
         const nuovaRicetta = {
@@ -173,12 +189,27 @@ async function salvaDati() {
 }
 
 async function aggiornaRicettaCloud(ricetta) {
-    await supabaseClient.from('ricette').upsert([ricetta]);
+    await supabaseClient
+        .from('ricette')
+        .update({
+            titolo: ricetta.titolo,
+            categoria: ricetta.categoria,
+            foto: ricetta.foto,
+            persone: ricetta.persone,
+            persone_base: ricetta.persone_base,
+            ingredienti: ricetta.ingredienti,
+            ingredienti_base: ricetta.ingredienti_base,
+            preparazione: ricetta.preparazione,
+            note: ricetta.note,
+            valutazione: ricetta.valutazione,
+            prove: ricetta.prove
+        })
+        .eq('id', ricetta.id);
     renderizzaLibro();
 }
 
 async function aggiornaSpesaCloud() {
-    await supabaseClient.from('lista_spesa').delete().neq('id', 0); // pulisce e ricarica
+    await supabaseClient.from('lista_spesa').delete().neq('id', 0);
     if (listaSpesa.length > 0) {
         await supabaseClient.from('lista_spesa').insert(listaSpesa);
     }
@@ -207,7 +238,6 @@ function importaBackup(event) {
                 ricettario = contenuto.ricettario;
                 if (contenuto.listaSpesa) listaSpesa = contenuto.listaSpesa;
                 
-                // Salva tutto su Supabase
                 await supabaseClient.from('ricette').delete().neq('id', 0);
                 if (ricettario.length > 0) await supabaseClient.from('ricette').insert(ricettario);
 
@@ -319,7 +349,7 @@ function renderizzaStoricoModal() {
         mediaStelle = (somma / ricetta.prove.length).toFixed(1);
     }
 
-    document.getElementById('storico-sottotitolo').innerHTML = `★ ${mediaStelle} • ${ricetta.prove.length} prove registrate`;
+    document.getElementById('storico-sottotitolo').innerHTML = `★ ${mediaStelle} · ${ricetta.prove.length} prove registrate`;
 
     const container = document.getElementById('lista-prove-container');
     if (ricetta.prove.length === 0) {
@@ -490,8 +520,8 @@ function renderizzaLibro() {
         numPagSx.textContent = pagDispari;
         numPagDx.textContent = pagPari;
 
-        if (!ricetta.personeBase) ricetta.personeBase = ricetta.persone;
-        if (!ricetta.ingredientiBase) ricetta.ingredientiBase = ricetta.ingredienti;
+        if (!ricetta.persone_base) ricetta.persone_base = ricetta.persone;
+        if (!ricetta.ingredienti_base) ricetta.ingredienti_base = ricetta.ingredienti;
         if (ricetta.valutazione === undefined) ricetta.valutazione = 0;
         if (!ricetta.prove) ricetta.prove = [];
 
@@ -662,7 +692,6 @@ function renderizzaLibro() {
         `;
     }
 }
-
 function aggiornaFricercaIndice(valore) {
     filtroRicercaIndice = valore;
     renderizzaLibro();
@@ -693,144 +722,119 @@ function avviaModalChef(idRicetta, passoIniziale = 0) {
     if (passiCorrenti.length === 0) passiCorrenti = [ricetta.preparazione];
 
     indicePassoAttivo = passoIniziale;
-    document.getElementById('chef-fs-titolo-ricetta').textContent = ricetta.titolo.toUpperCase();
+    mostraPassoChefCorrente();
     
     const modalChef = document.getElementById('modal-chef');
-    const containerSfondo = document.getElementById('chef-sfondo-container');
-    
-    if (ricetta.foto) {
-        containerSfondo.innerHTML = `
-            <img src="${ricetta.foto}" class="chef-bg-sfumato" alt="Sfondo ricetta">
-            <div class="chef-overlay-scuro"></div>
-        `;
-    } else {
-        containerSfondo.innerHTML = '';
-    }
-
-    modalChef.classList.remove('hidden');
-    mostraPassoChefFullscreen();
+    if (modalChef) modalChef.classList.remove('hidden');
 }
 
-function avviaTimerDaPasso(idRicetta, indicePasso) {
-    avviaModalChef(idRicetta, indicePasso);
-    setTimeout(() => {
-        const btnAvvia = document.getElementById('btn-fs-pausa') || document.querySelector('.chef-fs-btn-timer');
-        if (btnAvvia && !chefTimerAttivo) {
-            avviaPausaChefTimer();
+function mostraPassoChefCorrente() {
+    const containerTesto = document.getElementById('chef-testo-passo');
+    const containerIndicatori = document.getElementById('chef-indicatori-passi');
+    
+    if (!containerTesto) return;
+
+    if (passiCorrenti.length > 0) {
+        containerTesto.textContent = passiCorrenti[indicePassoAttivo];
+    } else {
+        containerTesto.textContent = "Nessun passaggio disponibile.";
+    }
+
+    if (containerIndicatori) {
+        containerIndicatori.innerHTML = passiCorrenti.map((_, idx) => `
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${idx === indicePassoAttivo ? 'var(--oro-accento)' : '#ccc'}; transition: background 0.3s;"></div>
+        `).join('');
+    }
+
+    const passoTesto = passiCorrenti[indicePassoAttivo] || "";
+    const matchTempo = passoTesto.match(/(\d+)\s*(ore|ora|minuti|minuto|min|secondi|secondo|sec)/i);
+    
+    const boxTimer = document.getElementById('chef-timer-box');
+    if (boxTimer) {
+        if (matchTempo) {
+            boxTimer.style.display = 'block';
+            impostaTimerDaMatch(matchTempo[0]);
+        } else {
+            boxTimer.style.display = 'none';
+            fermaTuttoAllarme();
         }
-    }, 100);
+    }
+}
+
+function passoPrecedenteChef() {
+    if (indicePassoAttivo > 0) {
+        indicePassoAttivo--;
+        fermaTuttoAllarme();
+        mostraPassoChefCorrente();
+    }
+}
+
+function passoSuccessivoChef() {
+    if (indicePassoAttivo < passiCorrenti.length - 1) {
+        indicePassoAttivo++;
+        fermaTuttoAllarme();
+        mostraPassoChefCorrente();
+    }
 }
 
 function chiudiModalChef() {
     fermaTuttoAllarme();
-    document.getElementById('modal-chef').classList.add('hidden');
+    const modalChef = document.getElementById('modal-chef');
+    if (modalChef) modalChef.classList.add('hidden');
 }
 
-function mostraPassoChefFullscreen() {
-    fermaTuttoAllarme();
-    const testoPasso = passiCorrenti[indicePassoAttivo];
-    
-    document.getElementById('chef-fs-step-indicatore').textContent = `PASSAGGIO ${indicePassoAttivo + 1} DI ${passiCorrenti.length}`;
-    document.getElementById('chef-fs-testo').textContent = testoPasso;
+function impostaTimerDaMatch(stringaTempo) {
+    const numMatch = stringaTempo.match(/\d+/);
+    if (!numMatch) return;
+    const valore = parseInt(numMatch[0]);
 
-    const containerBarre = document.getElementById('chef-fs-barre');
-    containerBarre.innerHTML = passiCorrenti.map((_, idx) => `
-        <div class="chef-fs-segmento ${idx <= indicePassoAttivo ? 'attivo' : ''}"></div>
-    `).join('');
+    let secondi = 0;
+    if (stringaTempo.toLowerCase().includes('ora') || stringaTempo.toLowerCase().includes('ore')) {
+        secondi = valore * 3600;
+    } else if (stringaTempo.toLowerCase().includes('min')) {
+        secondi = valore * 60;
+    } else {
+        secondi = valore;
+    }
 
-    const containerTimer = document.getElementById('chef-fs-timer-container');
-    const matchCorretto = testoPasso.match(/(\d+)\s*(ore|ora|minuti|minuto|min|secondi|secondo|sec)/i);
+    chefSecondiTotali = secondi;
+    chefSecondiRimanenti = secondi;
+    aggiornaDisplayTimer();
+}
 
-    if (matchCorretto) {
-        let quantita = parseInt(matchCorretto[1]);
-        let unita = matchCorretto[2].toLowerCase();
-        
-        if (unita.startsWith('ora')) {
-            chefSecondiTotali = quantita * 3600;
-        } else if (unita.startsWith('min')) {
-            chefSecondiTotali = quantita * 60;
-        } else {
-            chefSecondiTotali = quantita;
-        }
+function avviaTimerDaPasso(idRicetta, indicePasso) {
+    avviaModalChef(idRicetta, indicePasso);
+    avviaChefTimer();
+}
 
+function avviaChefTimer() {
+    if (chefTimerAttivo) return;
+    if (chefSecondiRimanenti <= 0 && chefSecondiTotali > 0) {
         chefSecondiRimanenti = chefSecondiTotali;
-
-        containerTimer.innerHTML = `
-            <button class="chef-fs-btn-timer" onclick="avviaPausaChefTimer()">
-                ⏱️ Avvia ${matchCorretto[0]}
-            </button>
-        `;
-    } else {
-        containerTimer.innerHTML = '';
     }
+    if (chefSecondiRimanenti <= 0) return;
 
-    document.getElementById('chef-fs-btn-prec').style.visibility = indicePassoAttivo === 0 ? 'hidden' : 'visible';
-    document.getElementById('chef-fs-btn-succ').textContent = indicePassoAttivo === passiCorrenti.length - 1 ? 'Fine ✓' : 'Avanti →';
+    chefTimerAttivo = true;
+    chefTimerInterval = setInterval(() => {
+        chefSecondiRimanenti--;
+        aggiornaDisplayTimer();
+        if (chefSecondiRimanenti <= 0) {
+            fermaChefTimer();
+            suonaAllarmeFineTimer();
+        }
+    }, 1000);
 }
 
-function passoSuccessivo() {
+function pausaChefTimer() {
+    chefTimerAttivo = false;
+    clearInterval(chefTimerInterval);
+}
+
+function resetChefTimer() {
+    pausaChefTimer();
+    chefSecondiRimanenti = chefSecondiTotali;
+    aggiornaDisplayTimer();
     fermaTuttoAllarme();
-    if (indicePassoAttivo < passiCorrenti.length - 1) {
-        indicePassoAttivo++;
-        mostraPassoChefFullscreen();
-    } else {
-        chiudiModalChef();
-    }
-}
-
-function passoPrecedente() {
-    fermaTuttoAllarme();
-    if (indicePassoAttivo > 0) {
-        indicePassoAttivo--;
-        mostraPassoChefFullscreen();
-    }
-}
-
-function avviaPausaChefTimer() {
-    inizializzaAudioContext();
-    const containerTimer = document.getElementById('chef-fs-timer-container');
-
-    if (!chefTimerAttivo) {
-        chefTimerAttivo = true;
-        
-        containerTimer.innerHTML = `
-            <div class="chef-fs-timer-attivo-box">
-                <span id="chef-fs-display" class="chef-fs-timer-display">--:--</span>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="chef-fs-btn-timer" onclick="avviaPausaChefTimer()" id="btn-fs-pausa">Pausa</button>
-                    <button class="chef-fs-btn-timer" onclick="azzeraChefTimerFullscreen()">Azzera</button>
-                </div>
-            </div>
-        `;
-
-        aggiornaDisplayChefFs();
-
-        chefTimerInterval = setInterval(() => {
-            if (chefSecondiRimanenti > 0) {
-                chefSecondiRimanenti--;
-                aggiornaDisplayChefFs();
-            } else {
-                fermaChefTimer();
-                chefSecondiRimanenti = 0;
-                aggiornaDisplayChefFs();
-                suonaSquilloUnicoTimer();
-                
-                if (containerTimer) {
-                    containerTimer.innerHTML = `
-                        <div class="chef-fs-timer-attivo-box">
-                            <span class="chef-fs-timer-display" style="color: #ff4d4d;">00:00 🔔</span>
-                            <button class="chef-fs-btn-timer" onclick="azzeraChefTimerFullscreen()">Riavvia</button>
-                        </div>
-                    `;
-                }
-            }
-        }, 1000);
-    } else {
-        chefTimerAttivo = false;
-        clearInterval(chefTimerInterval);
-        const btnPausa = document.getElementById('btn-fs-pausa');
-        if (btnPausa) btnPausa.textContent = "Riprendi";
-    }
 }
 
 function fermaChefTimer() {
@@ -838,172 +842,40 @@ function fermaChefTimer() {
     clearInterval(chefTimerInterval);
 }
 
-function azzeraChefTimerFullscreen() {
-    fermaTuttoAllarme();
-    chefSecondiRimanenti = chefSecondiTotali;
-    avviaPausaChefTimer();
-}
-
-function aggiornaDisplayChefFs() {
-    const min = Math.floor(chefSecondiRimanenti / 60);
-    const sec = chefSecondiRimanenti % 60;
-    const display = document.getElementById('chef-fs-display');
-    if (display) {
-        display.textContent = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    }
-}
-
-function suonaSquilloUnicoTimer() {
-    try {
-        inizializzaAudioContext();
-        for (let i = 0; i < 5; i++) {
-            setTimeout(() => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
-                
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.12);
-            }, i * 160);
-        }
-    } catch (e) {
-        console.log("Audio non supportato");
-    }
-}
-
 function fermaTuttoAllarme() {
     fermaChefTimer();
 }
 
-async function aggiungiAllaSpesaSilenzioso(nomeIngrediente, btnId) {
-    listaSpesa.push({ id: Date.now() + Math.random(), nome: nomeIngrediente, comprato: false });
-    await aggiornaSpesaCloud();
-    renderizzaLibro();
+function aggiornaDisplayTimer() {
+    const displayEl = document.getElementById('chef-timer-display');
+    if (!displayEl) return;
 
-    const btn = document.getElementById(btnId);
-    if (btn) {
-        btn.textContent = "✔";
-        btn.style.color = "var(--oro-accento)";
-        setTimeout(() => {
-            btn.textContent = "🛒";
-            btn.style.color = "initial";
-        }, 1200);
+    const ore = Math.floor(chefSecondiRimanenti / 3600);
+    const minuti = Math.floor((chefSecondiRimanenti % 3600) / 60);
+    const secondi = chefSecondiRimanenti % 60;
+
+    let testo = '';
+    if (ore > 0) {
+        testo = `${ore.toString().padStart(2, '0')}:${minuti.toString().padStart(2, '0')}:${secondi.toString().padStart(2, '0')}`;
+    } else {
+        testo = `${minuti.toString().padStart(2, '0')}:${secondi.toString().padStart(2, '0')}`;
+    }
+    displayEl.textContent = testo;
+}
+
+function suonaAllarmeFineTimer() {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.2);
+    } catch (e) {
+        console.log("Audio non supportato o bloccato dal browser");
     }
 }
-
-async function toggleSpesa(index) {
-    if (listaSpesa[index]) {
-        listaSpesa[index].comprato = !listaSpesa[index].comprato;
-        await aggiornaSpesaCloud();
-        renderizzaLibro();
-    }
-}
-
-async function rimuoviDaSpesa(index) {
-    listaSpesa.splice(index, 1);
-    await aggiornaSpesaCloud();
-    renderizzaLibro();
-}
-
-async function svuotaSpesa() {
-    if (confirm("Vuoi svuotare interamente la lista della spesa?")) {
-        listaSpesa = [];
-        await aggiornaSpesaCloud();
-        renderizzaLibro();
-    }
-}
-
-function vaiAllaSpesa() {
-    paginaPrecedenteIndex = paginaCorrenteIndex; 
-    const isMobile = window.innerWidth <= 1024;
-    const targetSpread = ricettario.length + 1;
-    paginaCorrenteIndex = isMobile ? targetSpread * 2 : targetSpread;
-    renderizzaLibro();
-}
-
-function tornaIndietroDaSpesa() {
-    paginaCorrenteIndex = paginaPrecedenteIndex; 
-    renderizzaLibro();
-}
-
-function vaiAllIndice() {
-    paginaCorrenteIndex = 0;
-    renderizzaLibro();
-}
-
-function apriModificaRicetta(id) {
-    inizializzaAudioContext();
-    const ricetta = ricettario.find(r => r.id === id);
-    if (!ricetta) return;
-
-    idRicettaInModifica = id;
-
-    document.getElementById('titolo').value = ricetta.titolo;
-    document.getElementById('categoria').value = ricetta.categoria;
-    document.getElementById('foto').value = ricetta.foto || '';
-    document.getElementById('persone').value = ricetta.personeBase || ricetta.persone;
-    document.getElementById('ingredienti').value = ricetta.ingredientiBase || ricetta.ingredienti;
-    document.getElementById('preparazione').value = ricetta.preparazione;
-    document.getElementById('note').value = ricetta.note || '';
-
-    modal.querySelector('h2').textContent = "Modifica Ricetta";
-    modal.classList.remove('hidden');
-}
-
-async function cambiaPorzioni(id, delta) {
-    const ricetta = ricettario.find(r => r.id === id);
-    if (!ricetta) return;
-
-    if (ricetta.persone + delta < 1) return;
-
-    ricetta.persone += delta;
-    const fattore = ricetta.persone / ricetta.personeBase;
-
-    ricetta.ingredienti = ricetta.ingredientiBase.replace(/(\d+([.,]\d+)?)/g, (match) => {
-        let num = parseFloat(match.replace(',', '.'));
-        let scalato = num * fattore;
-        return Number.isInteger(scalato) ? scalato : scalato.toFixed(1);
-    });
-
-    await aggiornaRicettaCloud(ricetta);
-}
-
-function vaiAllaRicetta(indiceArray) {
-    filtroRicercaIndice = ""; 
-    const isMobile = window.innerWidth <= 1024;
-    const targetSpread = indiceArray + 1;
-    paginaCorrenteIndex = isMobile ? targetSpread * 2 : targetSpread;
-    renderizzaLibro();
-}
-
-async function eliminaRicetta(id) {
-    if (confirm("Vuoi eliminare questa ricetta?")) {
-        ricettario = ricettario.filter(r => r.id !== id);
-        await supabaseClient.from('ricette').delete().eq('id', id);
-        paginaCorrenteIndex = 0;
-        renderizzaLibro();
-    }
-}
-
-// Avvia il caricamento dati appena si apre lo script
-caricaDatiDaCloud();
-
-// Funzione per caricare i dati da Supabase all'avvio della pagina
-async function caricaDatiDaSupabase() {
-    const { data, error } = await supabaseClient.from('ricette').select('*');
-    if (!error && data) {
-        ricettario = data;
-        renderizzaLibro();
-    }
-}
-
-// Esegue il caricamento appena si apre la pagina
-caricaDatiDaSupabase();
