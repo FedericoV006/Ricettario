@@ -172,13 +172,36 @@ body {
 
 .pagina {
     flex: 1;
-    padding: 2.8rem 3rem;
+    padding: 2.2rem 2.5rem;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between; /* Spinge sempre il footer in fondo */
     box-sizing: border-box;
     overflow: hidden;
-    animation: fadeInPagina 0.4s ease-out;
+    height: 100%;
+}
+
+.corpo-pagina {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+    height: calc(100% - 60px); /* Riempie lo spazio tra l'header e il footer */
+}
+
+.ricetta-layout-moderno {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    overflow: hidden;
+}
+
+.indice-romanzo-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 0.3rem;
 }
 
 @keyframes fadeInPagina {

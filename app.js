@@ -4,7 +4,7 @@ let paginaCorrenteIndex = 0;
 let paginaPrecedenteIndex = 0; 
 let idRicettaInModifica = null;
 let idRicettaStoricoAttiva = null; 
-let filtroRicercaIndice = ""; // Testo inserito nella barra di ricerca
+let filtroRicercaIndice = ""; 
 
 let passiCorrenti = [];
 let indicePassoAttivo = 0;
@@ -125,12 +125,8 @@ function salvaDati() {
     localStorage.setItem('lista_spesa_polillo', JSON.stringify(listaSpesa));
 }
 
-// --- ESPORTAZIONE E IMPORTAZIONE BACKUP (PER CELLULARE / PC) ---
 function esportaBackup() {
-    const dati = {
-        ricettario: ricettario,
-        listaSpesa: listaSpesa
-    };
+    const dati = { ricettario: ricettario, listaSpesa: listaSpesa };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dati, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
@@ -173,8 +169,6 @@ function impostaValutazione(idRicetta, stelle) {
         renderizzaLibro();
     }
 }
-
-// --- GESTIONE STORICO DELLE PROVE ---
 
 function apriStoricoProve(idRicetta) {
     inizializzaAudioContext();
@@ -290,7 +284,6 @@ function renderizzaStoricoModal() {
     }).join('');
 }
 
-
 function renderizzaLibro() {
     const titoloSxHeader = document.getElementById('titolo-sinistra-header');
     const titoloDxHeader = document.getElementById('titolo-destra-header');
@@ -298,6 +291,27 @@ function renderizzaLibro() {
     const contDx = document.getElementById('contenuto-pagina-destra');
     const numPagSx = document.getElementById('num-pag-sx');
     const numPagDx = document.getElementById('num-pag-dx');
+
+    const paginaSinistraEl = document.querySelector('.pagina-sinistra');
+    const paginaDestraEl = document.querySelector('.pagina-destra');
+
+    const isMobile = window.innerWidth <= 1024;
+    if (isMobile) {
+        if (paginaSinistraEl && paginaDestraEl) {
+            if (paginaCorrenteIndex % 2 === 0) {
+                paginaSinistraEl.classList.add('pagina-attiva-mobile');
+                paginaDestraEl.classList.remove('pagina-attiva-mobile');
+            } else {
+                paginaSinistraEl.classList.remove('pagina-attiva-mobile');
+                paginaDestraEl.classList.add('pagina-attiva-mobile');
+            }
+        }
+    } else {
+        if (paginaSinistraEl && paginaDestraEl) {
+            paginaSinistraEl.classList.remove('pagina-attiva-mobile');
+            paginaDestraEl.classList.remove('pagina-attiva-mobile');
+        }
+    }
 
     const maxPagine = ricettario.length + 1;
     btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
@@ -324,19 +338,16 @@ function renderizzaLibro() {
             <div style="margin-bottom: 0.8rem;">
                 <input type="text" id="input-cerca-indice" value="${filtroRicercaIndice}" oninput="aggiornaFricercaIndice(this.value)" placeholder="🔍 Cerca ricetta..." style="width: 100%; padding: 0.6rem 0.9rem; border-radius: 8px; border: 1px solid var(--colore-bordo); font-size: 0.9rem; box-sizing: border-box; background: #fff;">
             </div>
-            <div class="indice-romanzo-scroll" style="max-height: 520px;">
+            <div class="indice-romanzo-scroll">
         `;
 
         categorieMapping.forEach(cat => {
-            // Filtra in base alla ricerca testuale
             let ricetteCat = ricettario.filter(r => r.categoria === cat.id);
             if (filtroRicercaIndice.trim() !== "") {
                 ricetteCat = ricetteCat.filter(r => r.titolo.toLowerCase().includes(filtroRicercaIndice.toLowerCase()));
             }
 
-            if (ricetteCat.length === 0 && filtroRicercaIndice.trim() !== "") {
-                return; // Nasconde la categoria se non ci sono match durante la ricerca
-            }
+            if (ricetteCat.length === 0 && filtroRicercaIndice.trim() !== "") return;
 
             let htmlLista = '';
             if (ricetteCat.length === 0) {
@@ -376,7 +387,6 @@ function renderizzaLibro() {
         htmlSx += '</div>';
         contSx.innerHTML = htmlSx;
 
-        // Ripristina il focus sull'input di ricerca se l'utente stava scrivendo
         if (filtroRicercaIndice.trim() !== "") {
             setTimeout(() => {
                 const inputEl = document.getElementById('input-cerca-indice');
@@ -388,7 +398,7 @@ function renderizzaLibro() {
         }
 
         contDx.innerHTML = `
-            <div style="text-align: center; margin-top: 6rem; color: var(--testo-sfumato); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="text-align: center; margin-top: 4rem; color: var(--testo-sfumato); display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 2rem;">Seleziona una ricetta dall'indice o creane una nuova per iniziare.</p>
                 <button id="btn-nuova-ricetta" class="btn-classico" style="font-size: 1rem; padding: 0.9rem 2.2rem; border-radius: 30px;">+ Nuova Ricetta</button>
             </div>
@@ -413,9 +423,9 @@ function renderizzaLibro() {
 
         const righeIngredienti = ricetta.ingredienti.split('\n').filter(r => r.trim() !== '');
         const htmlIngredienti = righeIngredienti.map((ing, i) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 0.95rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
                 <span>• ${ing}</span>
-                <button id="btn-carrello-${paginaCorrenteIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ing.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">🛒</button>
+                <button id="btn-carrello-${paginaCorrenteIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ing.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
             </div>
         `).join('');
 
@@ -424,7 +434,7 @@ function renderizzaLibro() {
             htmlNoteSezione = `
                 <div class="box-note-chef">
                     <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--oro-accento); margin-bottom: 0.3rem;">Note dello Chef</div>
-                    <div style="font-size: 0.95rem; color: var(--testo-principale); font-style: italic; line-height: 1.4;">${ricetta.note}</div>
+                    <div style="font-size: 0.9rem; color: var(--testo-principale); font-style: italic; line-height: 1.4;">${ricetta.note}</div>
                 </div>
             `;
         }
@@ -461,51 +471,43 @@ function renderizzaLibro() {
             `;
         }).join('');
 
+        // ==========================================
+        // PAGINA SINISTRA: FOTO, TITOLO, INGREDIENTI E TASTI SOTTO
+        // ==========================================
         contSx.innerHTML = `
-            <div class="ricetta-layout-moderno">
-                <div class="ricetta-header-grid">
-                    ${ricetta.foto ? `<img src="${ricetta.foto}" alt="${ricetta.titolo}" class="ricetta-foto-principale" onerror="this.style.display='none'">` : ''}
-                    <div class="ricetta-info-testo">
-                        <div class="ricetta-meta-tags">
-                            <span>Ricetta</span>
-                            <div class="stelle-valutazione" title="Valuta questa ricetta">${htmlStelle}</div>
-                        </div>
-                        <h2>${ricetta.titolo}</h2>
-                        <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; align-items: center;">
-                            <button onclick="avviaModalChef(${ricetta.id})" class="btn-modalita-cucina-principale">
-                                <span>▶ Modalità cucina</span>
-                            </button>
-                            <button onclick="apriStoricoProve(${ricetta.id})" class="btn-piccolo" style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--oro-accento); padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--testo-principale);" title="Storico prove">
-                                📊 Storico (${ricetta.prove.length})
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 style="color: var(--testo-principale); margin: 0 0 0.8rem 0; font-size: 1.1rem; font-weight: 700;">Preparazione</h4>
-                    <div style="max-height: 440px; overflow-y: auto; padding-right: 0.3rem;">
-                        ${htmlPassiPreparazione}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        contDx.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="overflow-y: auto; max-height: 700px; padding-right: 0.3rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--colore-bordo); padding-bottom: 0.8rem; margin-bottom: 1.2rem;">
+                <div style="overflow-y: auto; max-height: 720px; padding-right: 0.3rem;">
+                    <div class="ricetta-header-grid" style="margin-bottom: 1.2rem;">
+                        ${ricetta.foto ? `<img src="${ricetta.foto}" alt="${ricetta.titolo}" class="ricetta-foto-principale" onerror="this.style.display='none'">` : ''}
+                        <div class="ricetta-info-testo">
+                            <div class="ricetta-meta-tags">
+                                <span>Ricetta</span>
+                                <div class="stelle-valutazione" title="Valuta questa ricetta">${htmlStelle}</div>
+                            </div>
+                            <h2>${ricetta.titolo}</h2>
+                            <div style="display: flex; gap: 0.6rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <button onclick="avviaModalChef(${ricetta.id})" class="btn-modalita-cucina-principale">
+                                    <span>▶ Modalità cucina</span>
+                                </button>
+                                <button onclick="apriStoricoProve(${ricetta.id})" class="btn-piccolo" style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--oro-accento); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; color: var(--testo-principale);" title="Storico prove">
+                                    📊 Storico (${ricetta.prove.length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--colore-bordo); padding-bottom: 0.8rem; margin-bottom: 1rem;">
                         <h4 style="color: var(--testo-principale); margin: 0; font-size: 1.1rem; font-weight: 700;">Ingredienti</h4>
                         <span style="font-size: 0.85rem; color: var(--testo-sfumato); font-weight: 600;">${righeIngredienti.length} voci</span>
                     </div>
 
-                    <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid var(--colore-bordo); border-radius: 10px; padding: 1rem; margin-bottom: 1.2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
+                    <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid var(--colore-bordo); border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
                             <span style="font-weight: 600; letter-spacing: 0.5px;">PORZIONI</span>
                             <div style="display: flex; align-items: center; gap: 0.8rem;">
-                                <button onclick="cambiaPorzioni(${ricetta.id}, -1)" style="background: white; border: 1px solid var(--colore-bordo); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">-</button>
-                                <span id="span-persone" style="font-weight: 700; font-size: 1.1rem;">${ricetta.persone}</span>
-                                <button onclick="cambiaPorzioni(${ricetta.id}, 1)" style="background: white; border: 1px solid var(--colore-bordo); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">+</button>
+                                <button onclick="cambiaPorzioni(${ricetta.id}, -1)" style="background: white; border: 1px solid var(--colore-bordo); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: bold;">-</button>
+                                <span id="span-persone" style="font-weight: 700; font-size: 1rem;">${ricetta.persone}</span>
+                                <button onclick="cambiaPorzioni(${ricetta.id}, 1)" style="background: white; border: 1px solid var(--colore-bordo); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: bold;">+</button>
                             </div>
                         </div>
                     </div>
@@ -513,14 +515,28 @@ function renderizzaLibro() {
                     <div id="testo-ingredienti">
                         ${htmlIngredienti}
                     </div>
-
-                    ${htmlNoteSezione}
                 </div>
 
-                <div style="display: flex; gap: 0.8rem; align-items: center; padding-top: 1rem; border-top: 1px solid var(--colore-bordo); margin-top: auto;">
-                    <button onclick="apriModificaRicetta(${ricetta.id})" title="Modifica" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">✏️</button>
-                    <button onclick="vaiAllaSpesa()" title="Lista spesa" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 1.05rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">🛒</button>
-                    <button onclick="vaiAllIndice()" title="Indice" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">🏠</button>
+                <div style="display: flex; gap: 0.6rem; align-items: center; padding-top: 0.8rem; border-top: 1px solid var(--colore-bordo); margin-top: auto;">
+                    <button onclick="apriModificaRicetta(${ricetta.id})" title="Modifica" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.9rem;">✏️</button>
+                    <button onclick="vaiAllaSpesa()" title="Lista spesa" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.9rem;">🛒</button>
+                    <button onclick="vaiAllIndice()" title="Indice" style="background: white; border: 1px solid var(--colore-bordo); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.9rem;">🏠</button>
+                </div>
+            </div>
+        `;
+
+        // ==========================================
+        // PAGINA DESTRA: PREPARAZIONE E NOTE DELLO CHEF (Senza bordi doppi)
+        // ==========================================
+        contDx.innerHTML = `
+            <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="overflow-y: auto; max-height: 720px; padding-right: 0.3rem;">
+                    <h4 style="color: var(--testo-principale); margin: 0 0 0.8rem 0; font-size: 1.1rem; font-weight: 700;">Preparazione</h4>
+                    <div style="margin-bottom: 1.5rem;">
+                        ${htmlPassiPreparazione}
+                    </div>
+
+                    ${htmlNoteSezione}
                 </div>
             </div>
         `;
@@ -537,24 +553,24 @@ function renderizzaLibro() {
         let htmlSpesaSx = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-                        <h4 style="color: var(--testo-principale); margin: 0; font-size: 1.2rem; font-weight: 700;">Da Acquistare</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="color: var(--testo-principale); margin: 0; font-size: 1.1rem; font-weight: 700;">Da Acquistare</h4>
                         ${listaSpesa.length > 0 ? `<button onclick="svuotaSpesa()" class="btn-piccolo" style="color: #b83232;">Svuota Lista</button>` : ''}
                     </div>
         `;
 
         if (listaSpesa.length === 0) {
-            htmlSpesaSx += `<p style="font-style: italic; color: var(--testo-sfumato); font-size: 1rem;">La lista della spesa è vuota. Clicca sui carrellini 🛒 accanto agli ingredienti.</p>`;
+            htmlSpesaSx += `<p style="font-style: italic; color: var(--testo-sfumato); font-size: 0.95rem;">La lista della spesa è vuota. Clicca sui carrellini 🛒 accanto agli ingredienti.</p>`;
         } else {
-            htmlSpesaSx += `<div style="max-height: 520px; overflow-y: auto; padding-right: 0.3rem;"><ul style="list-style: none; padding: 0; margin: 0;">`;
+            htmlSpesaSx += `<div style="max-height: 450px; overflow-y: auto; padding-right: 0.3rem;"><ul style="list-style: none; padding: 0; margin: 0;">`;
             listaSpesa.forEach((item, index) => {
                 htmlSpesaSx += `
-                    <li style="display: flex; align-items: center; justify-content: space-between; margin: 0.7rem 0; font-size: 1.05rem; ${item.comprato ? 'text-decoration: line-through; opacity: 0.4;' : ''}">
+                    <li style="display: flex; align-items: center; justify-content: space-between; margin: 0.6rem 0; font-size: 1rem; ${item.comprato ? 'text-decoration: line-through; opacity: 0.4;' : ''}">
                         <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; flex-grow: 1;">
                             <input type="checkbox" ${item.comprato ? 'checked' : ''} onchange="toggleSpesa(${index})" style="cursor: pointer; width: 18px; height: 18px; accent-color: var(--oro-accento);">
                             <span>${item.nome}</span>
                         </label>
-                        <button onclick="rimuoviDaSpesa(${index})" style="background: none; border: none; color: #b83232; cursor: pointer; font-size: 1.2rem;">×</button>
+                        <button onclick="rimuoviDaSpesa(${index})" style="background: none; border: none; color: #b83232; cursor: pointer; font-size: 1.1rem;">×</button>
                     </li>
                 `;
             });
@@ -566,26 +582,23 @@ function renderizzaLibro() {
 
         contDx.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-                <div style="text-align: center; margin-top: 4rem;">
-                    <p style="color: var(--testo-sfumato); font-size: 1.1rem; font-weight: 500;">Spunta gli ingredienti man mano che li acquisti.</p>
-                    <div style="font-size: 3.5rem; margin-top: 1.5rem; opacity: 0.7;">🛒</div>
+                <div style="text-align: center; margin-top: 3rem;">
+                    <p style="color: var(--testo-sfumato); font-size: 1rem; font-weight: 500;">Spunta gli ingredienti man mano che li acquisti.</p>
+                    <div style="font-size: 3rem; margin-top: 1rem; opacity: 0.7;">🛒</div>
                 </div>
 
-                <div style="padding-top: 1rem; border-top: 1px solid var(--colore-bordo); margin-bottom: 0.5rem; display: flex; justify-content: flex-end;">
-                    <button onclick="tornaIndietroDaSpesa()" class="btn-classico" style="font-size: 0.9rem; padding: 0.6rem 1.2rem;">← Torna indietro</button>
+                <div style="padding-top: 0.8rem; border-top: 1px solid var(--colore-bordo); display: flex; justify-content: flex-end;">
+                    <button onclick="tornaIndietroDaSpesa()" class="btn-classico" style="font-size: 0.85rem; padding: 0.5rem 1rem;">← Torna indietro</button>
                 </div>
             </div>
         `;
     }
 }
 
-// Funzione per aggiornare la ricerca in tempo reale nell'indice
 function aggiornaFricercaIndice(valore) {
     filtroRicercaIndice = valore;
     renderizzaLibro();
 }
-
-// --- MODALITÀ CHEF & TIMER ---
 
 function inizializzaAudioContext() {
     if (!audioCtx) {
@@ -715,7 +728,7 @@ function avviaPausaChefTimer() {
         containerTimer.innerHTML = `
             <div class="chef-fs-timer-attivo-box">
                 <span id="chef-fs-display" class="chef-fs-timer-display">--:--</span>
-                <div style="display: flex; gap: 0.6rem;">
+                <div style="display: flex; gap: 0.5rem;">
                     <button class="chef-fs-btn-timer" onclick="avviaPausaChefTimer()" id="btn-fs-pausa">Pausa</button>
                     <button class="chef-fs-btn-timer" onclick="azzeraChefTimerFullscreen()">Azzera</button>
                 </div>
@@ -738,7 +751,7 @@ function avviaPausaChefTimer() {
                     containerTimer.innerHTML = `
                         <div class="chef-fs-timer-attivo-box">
                             <span class="chef-fs-timer-display" style="color: #ff4d4d;">00:00 🔔</span>
-                            <button class="chef-fs-btn-timer" onclick="azzeraChefTimerFullscreen()">Riavvia Timer</button>
+                            <button class="chef-fs-btn-timer" onclick="azzeraChefTimerFullscreen()">Riavvia</button>
                         </div>
                     `;
                 }
@@ -801,8 +814,6 @@ function suonaSquilloUnicoTimer() {
 function fermaTuttoAllarme() {
     fermaChefTimer();
 }
-
-// --- UTILITY & NAVIGAZIONE ---
 
 function aggiungiAllaSpesaSilenzioso(nomeIngrediente, btnId) {
     listaSpesa.push({ nome: nomeIngrediente, comprato: false });
@@ -911,7 +922,7 @@ btnPrec.addEventListener('click', () => {
 });
 
 function vaiAllaRicetta(indiceArray) {
-    filtroRicercaIndice = ""; // Reset della ricerca quando si apre una ricetta
+    filtroRicercaIndice = ""; 
     paginaCorrenteIndex = indiceArray + 1;
     renderizzaLibro();
 }
