@@ -718,3 +718,16 @@ body {
         font-size: 1.4rem !important;
     }
 }
+
+.btn-nav-footer {
+    padding: 0.4rem 0.9rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+}
+
+@media screen and (max-width: 1024px) {
+    .destra-footer-gruppo {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}

@@ -26,8 +26,34 @@ const formRicetta = document.getElementById('form-ricetta');
 
 const modalStorico = document.getElementById('modal-storico');
 
-const btnPrec = document.getElementById('btn-prec');
-const btnSucc = document.getElementById('btn-succ');
+// Selezione universale dei pulsanti di navigazione presenti nei footer
+const btnPrecElements = [document.getElementById('btn-prec-sx'), document.getElementById('btn-prec-dx')];
+const btnSuccElements = [document.getElementById('btn-succ-sx'), document.getElementById('btn-succ-dx')];
+
+// Listener per la navigazione universale
+btnPrecElements.forEach(btn => {
+    if (btn) {
+        btn.addEventListener('click', () => {
+            if (paginaCorrenteIndex > 0) {
+                paginaCorrenteIndex--;
+                renderizzaLibro();
+            }
+        });
+    }
+});
+
+btnSuccElements.forEach(btn => {
+    if (btn) {
+        btn.addEventListener('click', () => {
+            const isMobile = window.innerWidth <= 1024;
+            const maxIndex = isMobile ? (ricettario.length + 2) * 2 - 1 : ricettario.length + 1;
+            if (paginaCorrenteIndex < maxIndex) {
+                paginaCorrenteIndex++;
+                renderizzaLibro();
+            }
+        });
+    }
+});
 
 // Copertina editoriale di lusso
 document.getElementById('libro-copertina').innerHTML = `
@@ -318,25 +344,15 @@ function renderizzaLibro() {
         }
     }
 
-    const maxSpread = ricettario.length + 1;
     const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
+    const maxSpread = ricettario.length + 1;
 
-    // Gestione dei pulsanti di navigazione universali per mobile e desktop
-    const footerSxEl = paginaSinistraEl.querySelector('.footer-pagina');
-    const footerDxEl = paginaDestraEl.querySelector('.footer-pagina');
+    // Gestione visibilità pulsanti di navigazione nei footer
+    const mostraPrec = paginaCorrenteIndex > 0;
+    const mostraSucc = isMobile ? paginaCorrenteIndex < maxMobileIndex : paginaCorrenteIndex < maxSpread;
 
-    if (isMobile) {
-        // Su mobile inseriamo entrambi i pulsanti (Indietro / Avanti) nel footer della pagina attiva
-        const htmlNavMobile = `
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                <button id="btn-prec-mob" class="btn-piccolo" onclick="cambiaPaginaMobile(-1)" ${paginaCorrenteIndex === 0 ? 'style="visibility:hidden;"' : ''}>← Indietro</button>
-                <span class="numero-pagina">Pag. ${paginaCorrenteIndex + 1}</span>
-                <button id="btn-succ-mob" class="btn-piccolo" onclick="cambiaPaginaMobile(1)" ${paginaCorrenteIndex >= maxMobileIndex ? 'style="visibility:hidden;"' : ''}>Avanti →</button>
-            </div>
-        `;
-        if (!isRightPage && footerSxEl) footerSxEl.innerHTML = htmlNavMobile;
-        if (isRightPage && footerDxEl) footerDxEl.innerHTML = htmlNavMobile;
-    }
+    btnPrecElements.forEach(btn => { if (btn) btn.style.display = mostraPrec ? 'inline-block' : 'none'; });
+    btnSuccElements.forEach(btn => { if (btn) btn.style.display = mostraSucc ? 'inline-block' : 'none'; });
 
     if (spreadIndex === 0) {
         titoloSxHeader.textContent = "INDICE GENERALE";
@@ -609,16 +625,6 @@ function renderizzaLibro() {
                 </div>
             </div>
         `;
-    }
-}
-
-// Funzione di supporto per far avanzare/indietreggiare i passi da mobile
-function cambiaPaginaMobile(direzione) {
-    const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
-    const nuovoIndice = paginaCorrenteIndex + direzione;
-    if (nuovoIndice >= 0 && nuovoIndice <= maxMobileIndex) {
-        paginaCorrenteIndex = nuovoIndice;
-        renderizzaLibro();
     }
 }
 
@@ -934,22 +940,6 @@ function cambiaPorzioni(id, delta) {
     salvaDati();
     renderizzaLibro();
 }
-
-btnSucc.addEventListener('click', () => {
-    const isMobile = window.innerWidth <= 1024;
-    const maxIndex = isMobile ? (ricettario.length + 2) * 2 - 1 : ricettario.length + 1;
-    if (paginaCorrenteIndex < maxIndex) {
-        paginaCorrenteIndex++;
-        renderizzaLibro();
-    }
-});
-
-btnPrec.addEventListener('click', () => {
-    if (paginaCorrenteIndex > 0) {
-        paginaCorrenteIndex--;
-        renderizzaLibro();
-    }
-});
 
 function vaiAllaRicetta(indiceArray) {
     filtroRicercaIndice = ""; 
