@@ -296,9 +296,15 @@ function renderizzaLibro() {
     const paginaDestraEl = document.querySelector('.pagina-destra');
 
     const isMobile = window.innerWidth <= 1024;
+    
+    // Calcolo dello spread (capitolo/pagina doppia) e della pagina attiva su mobile
+    let spreadIndex = paginaCorrenteIndex;
     if (isMobile) {
+        spreadIndex = Math.floor(paginaCorrenteIndex / 2);
+        const isRightPage = (paginaCorrenteIndex % 2 === 1);
+
         if (paginaSinistraEl && paginaDestraEl) {
-            if (paginaCorrenteIndex % 2 === 0) {
+            if (!isRightPage) {
                 paginaSinistraEl.classList.add('pagina-attiva-mobile');
                 paginaDestraEl.classList.remove('pagina-attiva-mobile');
             } else {
@@ -313,11 +319,18 @@ function renderizzaLibro() {
         }
     }
 
-    const maxPagine = ricettario.length + 1;
-    btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
-    btnSucc.style.display = paginaCorrenteIndex >= maxPagine ? 'none' : 'inline-block';
+    const maxSpread = ricettario.length + 1;
+    const maxMobileIndex = (ricettario.length + 2) * 2 - 1;
 
-    if (paginaCorrenteIndex === 0) {
+    if (isMobile) {
+        btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
+        btnSucc.style.display = paginaCorrenteIndex >= maxMobileIndex ? 'none' : 'inline-block';
+    } else {
+        btnPrec.style.display = paginaCorrenteIndex === 0 ? 'none' : 'inline-block';
+        btnSucc.style.display = paginaCorrenteIndex >= maxSpread ? 'none' : 'inline-block';
+    }
+
+    if (spreadIndex === 0) {
         titoloSxHeader.textContent = "INDICE GENERALE";
         titoloDxHeader.textContent = "COLLEZIONE";
         numPagSx.textContent = "1";
@@ -404,14 +417,14 @@ function renderizzaLibro() {
             </div>
         `;
 
-    } else if (paginaCorrenteIndex <= ricettario.length) {
-        const ricetta = ricettario[paginaCorrenteIndex - 1];
+    } else if (spreadIndex <= ricettario.length) {
+        const ricetta = ricettario[spreadIndex - 1];
         if (!ricetta) return;
 
         titoloSxHeader.textContent = ricetta.titolo.toUpperCase();
         titoloDxHeader.textContent = ricetta.titolo.toUpperCase();
         
-        const pagDispari = paginaCorrenteIndex * 2 + 1;
+        const pagDispari = spreadIndex * 2 + 1;
         const pagPari = pagDispari + 1;
         numPagSx.textContent = pagDispari;
         numPagDx.textContent = pagPari;
@@ -425,7 +438,7 @@ function renderizzaLibro() {
         const htmlIngredienti = righeIngredienti.map((ing, i) => `
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-size: 0.95rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.4rem;">
                 <span>• ${ing}</span>
-                <button id="btn-carrello-${paginaCorrenteIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ing.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
+                <button id="btn-carrello-${spreadIndex}-${i}" onclick="aggiungiAllaSpesaSilenzioso('${ing.replace(/'/g, "\\'")}', this.id)" title="Aggiungi alla spesa" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.7;">🛒</button>
             </div>
         `).join('');
 
@@ -545,7 +558,7 @@ function renderizzaLibro() {
         titoloSxHeader.textContent = "LISTA DELLA SPESA";
         titoloDxHeader.textContent = "NOTE E ACQUISTI";
         
-        const pagDispari = paginaCorrenteIndex * 2 + 1;
+        const pagDispari = spreadIndex * 2 + 1;
         const pagPari = pagDispari + 1;
         numPagSx.textContent = pagDispari;
         numPagDx.textContent = pagPari;
@@ -854,18 +867,15 @@ function svuotaSpesa() {
 
 function vaiAllaSpesa() {
     paginaPrecedenteIndex = paginaCorrenteIndex; 
-    paginaCorrenteIndex = ricettario.length + 1;
+    const isMobile = window.innerWidth <= 1024;
+    const targetSpread = ricettario.length + 1;
+    paginaCorrenteIndex = isMobile ? targetSpread * 2 : targetSpread;
     renderizzaLibro();
 }
 
 function tornaIndietroDaSpesa() {
     paginaCorrenteIndex = paginaPrecedenteIndex; 
     renderizzaLibro();
-}
-
-function vaiAllIndice() {
-    paginaCorrenteIndex = 0;
-    renderizzaLiblog(); // corretto sotto in renderizzaLibro
 }
 
 function vaiAllIndice() {
@@ -912,8 +922,9 @@ function cambiaPorzioni(id, delta) {
 }
 
 btnSucc.addEventListener('click', () => {
-    const maxPagine = ricettario.length + 1;
-    if (paginaCorrenteIndex < maxPagine) {
+    const isMobile = window.innerWidth <= 1024;
+    const maxIndex = isMobile ? (ricettario.length + 2) * 2 - 1 : ricettario.length + 1;
+    if (paginaCorrenteIndex < maxIndex) {
         paginaCorrenteIndex++;
         renderizzaLibro();
     }
@@ -928,7 +939,9 @@ btnPrec.addEventListener('click', () => {
 
 function vaiAllaRicetta(indiceArray) {
     filtroRicercaIndice = ""; 
-    paginaCorrenteIndex = indiceArray + 1;
+    const isMobile = window.innerWidth <= 1024;
+    const targetSpread = indiceArray + 1;
+    paginaCorrenteIndex = isMobile ? targetSpread * 2 : targetSpread;
     renderizzaLibro();
 }
 
